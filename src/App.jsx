@@ -663,7 +663,12 @@ function SettingsView({ customers, setCustomers, brandsModels, setBrandsModels, 
   const handleSaveUser = async (formData, mode) => {
     try {
       if (mode === 'add') {
-        await apiFetch(`${API_URL}/users`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
+        const res = await apiFetch(`${API_URL}/users`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
+        if (!res.ok) {
+            const err = await res.json();
+            showToast(err.error || 'Kullanıcı eklenemedi!', 'error');
+            return;
+        }
         showToast('Yeni kullanıcı başarıyla eklendi!');
       } else {
         await apiFetch(`${API_URL}/users/${formData.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
@@ -2394,7 +2399,8 @@ function RootSetupWizard({ currentUser, onAdminCreated, onDisableBackdoor }) {
         setStep(2);
         onAdminCreated();
       } else {
-        alert('Kullanıcı oluşturulamadı. Kullanıcı adı zaten alınmış olabilir.');
+        const errorData = await res.json();
+        alert(errorData.error || 'Kullanıcı oluşturulamadı.');
       }
     } catch (err) {
       alert('Bağlantı hatası.');

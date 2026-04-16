@@ -41,6 +41,22 @@ const pool = new Pool({
     connectionString: process.env.DATABASE_URL || 'postgres://devoteam:devoteam_db_password@db-postgres:5432/devoteam_db'
 });
 
+// --- VERİTABANI İNİSİALİZASYONU ---
+const initDb = async () => {
+    try {
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS docs (
+                resource VARCHAR(50),
+                id VARCHAR(255),
+                data JSONB,
+                PRIMARY KEY (resource, id)
+            );
+        `);
+        console.log('✅ PostgreSQL tablo yapısı hazır.');
+    } catch (e) { console.error('❌ Tablo oluşturma hatası:', e); }
+};
+initDb();
+
 const readDb = async (resource) => {
     try {
         const res = await pool.query('SELECT data FROM docs WHERE resource = $1', [resource]);
@@ -129,16 +145,20 @@ resources.forEach(resource => {
             // Eğer users tablosuysa kullanıcı adı çakışmasını kontrol et
             if (resource === 'users' && req.body.username) {
                 const data = await readDb('users');
-                const exists = data.find(u => u.username === req.body.username);
-                if (exists) return res.status(400).json({ error: "Bu kullanıcı adı zaten kullanılmaktadır." });
+                const exists = data.find(u => String(u.username).toLowerCase() === String(req.body.username).toLowerCase());
+                if (exists) {
+                    console.warn(`⚠️ Kayıt engellendi: ${req.body.username} zaten mevcut.`);
+                    return res.status(400).json({ error: "Bu kullanıcı adı zaten kullanılmaktadır. Farklı bir isim deneyin veya Logout olup o hesapla giriş yapın." });
+                }
             }
 
             const newItem = { ...req.body, id: req.body.id || Date.now().toString() };
             await writeDbRecord(resource, newItem.id, newItem);
+            console.log(`✅ Yeni kayıt eklendi: ${resource}/${newItem.id}`);
             res.status(201).json(newItem);
         } catch (e) {
-            console.error(`POST /${resource} error:`, e);
-            res.status(500).json({ error: "Sunucu hatası oluştu." });
+            console.error(`❌ POST /${resource} Hatası:`, e);
+            res.status(500).json({ error: "Veritabanına yazılırken bir hata oluştu: " + e.message });
         }
     });
 
