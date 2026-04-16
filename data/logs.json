@@ -1,0 +1,1496 @@
+[
+  {
+    "ticketId": "TKT-71571",
+    "status": "Müşteriden Alındı",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-20T12:43:42.742Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1771591422833"
+  },
+  {
+    "ticketId": "TKT-71571",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-20T12:43:42.742Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1771591422841"
+  },
+  {
+    "ticketId": "TKT-53118",
+    "status": "Müşteriden Alındı",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-20T12:49:04.276Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1771591744394"
+  },
+  {
+    "ticketId": "TKT-53118",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-20T12:49:04.276Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1771591744420"
+  },
+  {
+    "ticketId": "TKT-34889",
+    "status": "Müşteriden Alındı",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-22T11:08:44.708Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1771758525288"
+  },
+  {
+    "ticketId": "TKT-34889",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-22T11:08:44.708Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1771758525362"
+  },
+  {
+    "ticketId": "TKT-34889",
+    "status": "Servisten Döndü",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-22T11:09:35.399Z",
+    "repairType": "Ücretli",
+    "serviceNote": "Ttug",
+    "id": "1771758575507"
+  },
+  {
+    "ticketId": "TKT-34889",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-22T11:09:53.662Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1771758593804"
+  },
+  {
+    "ticketId": "TKT-63828",
+    "status": "Müşteriden Alındı",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-22T12:15:18.044Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1771762518051"
+  },
+  {
+    "ticketId": "TKT-92138",
+    "status": "Müşteriden Alındı",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-22T12:18:03.658Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1771762684185"
+  },
+  {
+    "ticketId": "TKT-28339",
+    "status": "Müşteriden Alındı",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-22T12:28:54.259Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1771763334427"
+  },
+  {
+    "ticketId": "TKT-46998",
+    "status": "Müşteriden Alındı",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-22T12:30:54.575Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1771763454581"
+  },
+  {
+    "ticketId": "TKT-80973",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-23T07:05:24.058Z",
+    "repairType": "Garantili",
+    "serviceNote": "",
+    "id": "1771830324076"
+  },
+  {
+    "ticketId": "TKT-19591",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-23T07:05:24.058Z",
+    "repairType": "Garantili",
+    "serviceNote": "",
+    "id": "1771830324079"
+  },
+  {
+    "ticketId": "TKT-83500",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-23T07:05:24.058Z",
+    "repairType": "Garantili",
+    "serviceNote": "",
+    "id": "1771830324083"
+  },
+  {
+    "ticketId": "TKT-53118",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-23T07:05:24.058Z",
+    "repairType": "Garantili",
+    "serviceNote": "",
+    "id": "1771830324086"
+  },
+  {
+    "ticketId": "TKT-49370",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-23T07:05:24.058Z",
+    "repairType": "Garantili",
+    "serviceNote": "",
+    "id": "1771830324090"
+  },
+  {
+    "ticketId": "TKT-63828",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-23T07:05:24.058Z",
+    "repairType": "Garantili",
+    "serviceNote": "",
+    "id": "1771830324093"
+  },
+  {
+    "ticketId": "TKT-92138",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-23T07:05:24.058Z",
+    "repairType": "Garantili",
+    "serviceNote": "",
+    "id": "1771830324097"
+  },
+  {
+    "ticketId": "TKT-17665",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-23T07:05:24.058Z",
+    "repairType": "Garantili",
+    "serviceNote": "",
+    "id": "1771830324100"
+  },
+  {
+    "ticketId": "TKT-28339",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-23T07:05:24.058Z",
+    "repairType": "Garantili",
+    "serviceNote": "",
+    "id": "1771830324103"
+  },
+  {
+    "ticketId": "TKT-46998",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-23T07:05:24.058Z",
+    "repairType": "Garantili",
+    "serviceNote": "",
+    "id": "1771830324107"
+  },
+  {
+    "ticketId": "TKT-30415",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-23T07:05:24.058Z",
+    "repairType": "Garantili",
+    "serviceNote": "",
+    "id": "1771830324110"
+  },
+  {
+    "ticketId": "TKT-24743",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-23T07:05:24.058Z",
+    "repairType": "Garantili",
+    "serviceNote": "",
+    "id": "1771830324113"
+  },
+  {
+    "ticketId": "TKT-33604",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-23T07:05:24.058Z",
+    "repairType": "Garantili",
+    "serviceNote": "",
+    "id": "1771830324117"
+  },
+  {
+    "ticketId": "TKT-44401",
+    "status": "Müşteriden Alındı",
+    "personnel": "Selim ŞAHİN",
+    "timestamp": "2026-02-23T07:20:47.628Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1771831247981"
+  },
+  {
+    "ticketId": "TKT-44401",
+    "status": "Servise Gönderildi",
+    "personnel": "Selim ŞAHİN",
+    "timestamp": "2026-02-23T07:20:47.628Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1771831248011"
+  },
+  {
+    "ticketId": "TKT-44401",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Selim ŞAHİN",
+    "timestamp": "2026-02-23T07:21:37.517Z",
+    "repairType": "Garantili",
+    "serviceNote": "",
+    "id": "1771831297579"
+  },
+  {
+    "ticketId": "TKT-44401",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Selim ŞAHİN",
+    "timestamp": "2026-02-23T07:21:37.517Z",
+    "repairType": "Garantili",
+    "serviceNote": "",
+    "id": "1771831297587"
+  },
+  {
+    "ticketId": "TKT-63837",
+    "status": "Müşteriden Alındı",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-23T07:34:57.358Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1771832098960"
+  },
+  {
+    "ticketId": "TKT-63837",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-23T07:34:57.358Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1771832098997"
+  },
+  {
+    "ticketId": "TKT-63837",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-02-23T07:40:00.000Z",
+    "repairType": "Garantili",
+    "serviceNote": "bolt",
+    "id": "1771832483617"
+  },
+  {
+    "ticketId": "TKT-34906",
+    "status": "Müşteriden Alındı",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-02-23T07:41:35.455Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1771832495738"
+  },
+  {
+    "ticketId": "TKT-34906",
+    "status": "Servise Gönderildi",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-02-23T07:41:35.455Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1771832495768"
+  },
+  {
+    "ticketId": "TKT-34906",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-23T07:50:31.350Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1771833031351"
+  },
+  {
+    "ticketId": "TKT-34906",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-23T07:50:31.350Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1771833031368"
+  },
+  {
+    "ticketId": "TKT-88906",
+    "status": "Müşteriden Alındı",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-23T07:51:08.174Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1771833068170"
+  },
+  {
+    "ticketId": "TKT-88906",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-23T07:51:08.174Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1771833068446"
+  },
+  {
+    "ticketId": "TKT-88906",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-23T07:51:00.000Z",
+    "repairType": "İşlem Yapılmadı",
+    "serviceNote": "",
+    "id": "1771833082658"
+  },
+  {
+    "ticketId": "TKT-88242",
+    "status": "Müşteriden Alındı",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-23T07:51:26.158Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1771833086131"
+  },
+  {
+    "ticketId": "TKT-88242",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-23T07:51:26.158Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1771833086431"
+  },
+  {
+    "ticketId": "TKT-88242",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-23T07:51:43.374Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1771833103373"
+  },
+  {
+    "ticketId": "TKT-88242",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-23T07:51:43.374Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1771833103587"
+  },
+  {
+    "ticketId": "TKT-36653",
+    "status": "Müşteriden Alındı",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-23T08:18:52.628Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1771834732605"
+  },
+  {
+    "ticketId": "TKT-36653",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-23T08:18:52.628Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1771834732902"
+  },
+  {
+    "ticketId": "TKT-36653",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-23T08:18:00.000Z",
+    "repairType": "Garantili",
+    "serviceNote": "",
+    "id": "1771834741594"
+  },
+  {
+    "ticketId": "TKT-96845",
+    "status": "Müşteriden Alındı",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-23T08:19:24.243Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1771834764218"
+  },
+  {
+    "ticketId": "TKT-96845",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-23T08:19:24.243Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1771834764514"
+  },
+  {
+    "ticketId": "TKT-96845",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-02-23T09:11:00.000Z",
+    "repairType": "Garantili",
+    "serviceNote": "",
+    "id": "1771837918285"
+  },
+  {
+    "ticketId": "TKT-1070",
+    "status": "Servisten Döndü",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-05T12:34:51.809Z",
+    "repairType": "Garantili",
+    "serviceNote": "Anakart değiştirildi. Sorun giderildi. ",
+    "id": "1772714091953"
+  },
+  {
+    "ticketId": "TKT-24196",
+    "status": "Müşteriden Alındı",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-05T12:41:28.932Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772714488662"
+  },
+  {
+    "ticketId": "TKT-24196",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-05T12:41:28.932Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772714488703"
+  },
+  {
+    "ticketId": "TKT-24196",
+    "status": "Servisten Döndü",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-05T12:43:47.411Z",
+    "repairType": "Garantili",
+    "serviceNote": "Klavye Değiştirildi. Sorun Giderildi.",
+    "id": "1772714627170"
+  },
+  {
+    "ticketId": "TKT-1066",
+    "status": "Servisten Döndü",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-05T12:43:47.411Z",
+    "repairType": "Garantili",
+    "serviceNote": "LCD Ekran Değiştirildi. Sorun Giderildi.",
+    "id": "1772714627250"
+  },
+  {
+    "ticketId": "TKT-1065",
+    "status": "Servisten Döndü",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-05T12:43:47.411Z",
+    "repairType": "Garantili",
+    "serviceNote": "Klavye Değiştirildi. Sorun Giderildi.",
+    "id": "1772714627280"
+  },
+  {
+    "ticketId": "TKT-1069",
+    "status": "Servisten Döndü",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-05T12:43:47.411Z",
+    "repairType": "Garantili",
+    "serviceNote": "Klavye Değiştirildi. Sorun Giderildi.",
+    "id": "1772714627401"
+  },
+  {
+    "ticketId": "TKT-1067",
+    "status": "Servisten Döndü",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-05T12:43:47.411Z",
+    "repairType": "Garantili",
+    "serviceNote": "Anakart Değiştirildi. Sorun Giderildi.",
+    "id": "1772714627455"
+  },
+  {
+    "ticketId": "TKT-1068",
+    "status": "Servisten Döndü",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-05T12:43:47.411Z",
+    "repairType": "Garantili",
+    "serviceNote": "LCD Ekran Değiştirildi. Sorun Giderildi.",
+    "id": "1772714627496"
+  },
+  {
+    "ticketId": "TKT-24196",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T10:57:03.183Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772794623566"
+  },
+  {
+    "ticketId": "TKT-1065",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T10:57:23.900Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772794644246"
+  },
+  {
+    "ticketId": "TKT-1066",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T10:57:39.197Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772794659567"
+  },
+  {
+    "ticketId": "TKT-1067",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T10:57:47.315Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772794667717"
+  },
+  {
+    "ticketId": "TKT-1068",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T10:57:54.920Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772794675287"
+  },
+  {
+    "ticketId": "TKT-1069",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T10:58:00.548Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772794680928"
+  },
+  {
+    "ticketId": "TKT-1070",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T10:58:07.127Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772794687532"
+  },
+  {
+    "ticketId": "TKT-12331",
+    "status": "Müşteriden Alındı",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T11:48:00.098Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772797679827"
+  },
+  {
+    "ticketId": "TKT-78570",
+    "status": "Müşteriden Alındı",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T11:48:42.901Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772797722593"
+  },
+  {
+    "ticketId": "TKT-53744",
+    "status": "Müşteriden Alındı",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T11:49:25.187Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772797764894"
+  },
+  {
+    "ticketId": "TKT-55488",
+    "status": "Müşteriden Alındı",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T11:51:26.996Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772797886672"
+  },
+  {
+    "ticketId": "TKT-18665",
+    "status": "Müşteriden Alındı",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T11:52:19.634Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772797939310"
+  },
+  {
+    "ticketId": "TKT-50284",
+    "status": "Müşteriden Alındı",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T11:54:29.174Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772798068852"
+  },
+  {
+    "ticketId": "TKT-11560",
+    "status": "Müşteriden Alındı",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T11:55:01.707Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772798101387"
+  },
+  {
+    "ticketId": "TKT-57995",
+    "status": "Müşteriden Alındı",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T11:55:58.412Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772798158085"
+  },
+  {
+    "ticketId": "TKT-36669",
+    "status": "Müşteriden Alındı",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T11:56:33.238Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772798192909"
+  },
+  {
+    "ticketId": "TKT-19467",
+    "status": "Müşteriden Alındı",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T11:57:05.692Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772798225363"
+  },
+  {
+    "ticketId": "TKT-60002",
+    "status": "Müşteriden Alındı",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T11:57:45.338Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772798265016"
+  },
+  {
+    "ticketId": "TKT-51747",
+    "status": "Müşteriden Alındı",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T11:58:24.592Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772798304269"
+  },
+  {
+    "ticketId": "TKT-61036",
+    "status": "Müşteriden Alındı",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T11:58:57.486Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772798337160"
+  },
+  {
+    "ticketId": "TKT-72650",
+    "status": "Müşteriden Alındı",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T11:59:34.736Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772798374411"
+  },
+  {
+    "ticketId": "TKT-17726",
+    "status": "Müşteriden Alındı",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T12:00:04.349Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772798404027"
+  },
+  {
+    "ticketId": "TKT-17193",
+    "status": "Müşteriden Alındı",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T12:00:45.168Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772798444942"
+  },
+  {
+    "ticketId": "TKT-87465",
+    "status": "Müşteriden Alındı",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T12:01:19.286Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772798478985"
+  },
+  {
+    "ticketId": "TKT-30660",
+    "status": "Müşteriden Alındı",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T12:02:43.440Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772798563123"
+  },
+  {
+    "ticketId": "TKT-11946",
+    "status": "Müşteriden Alındı",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T12:03:16.564Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772798596243"
+  },
+  {
+    "ticketId": "TKT-22569",
+    "status": "Müşteriden Alındı",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T12:03:54.326Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772798633996"
+  },
+  {
+    "ticketId": "TKT-86959",
+    "status": "Müşteriden Alındı",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T12:04:38.780Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772798678449"
+  },
+  {
+    "ticketId": "TKT-64714",
+    "status": "Müşteriden Alındı",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T12:05:42.666Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772798742346"
+  },
+  {
+    "ticketId": "TKT-42464",
+    "status": "Müşteriden Alındı",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T12:06:21.668Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772798781337"
+  },
+  {
+    "ticketId": "TKT-15364",
+    "status": "Müşteriden Alındı",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T12:06:55.856Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772798815528"
+  },
+  {
+    "ticketId": "TKT-17113",
+    "status": "Müşteriden Alındı",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T12:07:29.183Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772798848864"
+  },
+  {
+    "ticketId": "TKT-45979",
+    "status": "Müşteriden Alındı",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T12:08:09.714Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772798889385"
+  },
+  {
+    "ticketId": "TKT-45214",
+    "status": "Müşteriden Alındı",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T12:09:07.098Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772798946766"
+  },
+  {
+    "ticketId": "TKT-11782",
+    "status": "Müşteriden Alındı",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T12:09:43.738Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772798983419"
+  },
+  {
+    "ticketId": "TKT-46209",
+    "status": "Müşteriden Alındı",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T12:10:17.257Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772799016925"
+  },
+  {
+    "ticketId": "TKT-11128",
+    "status": "Müşteriden Alındı",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T12:10:54.768Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772799054451"
+  },
+  {
+    "ticketId": "TKT-18224",
+    "status": "Müşteriden Alındı",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-06T12:11:19.580Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1772799079256"
+  },
+  {
+    "ticketId": "TKT-11128",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-09T06:20:47.258Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1773037247566"
+  },
+  {
+    "ticketId": "TKT-18224",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-09T06:20:47.258Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1773037247585"
+  },
+  {
+    "ticketId": "TKT-46209",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-09T06:20:47.258Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1773037247651"
+  },
+  {
+    "ticketId": "TKT-11782",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-09T06:20:47.258Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1773037247669"
+  },
+  {
+    "ticketId": "TKT-45214",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-09T06:20:47.258Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1773037247697"
+  },
+  {
+    "ticketId": "TKT-17113",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-09T06:20:47.258Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1773037247736"
+  },
+  {
+    "ticketId": "TKT-45979",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-09T06:20:47.258Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1773037247758"
+  },
+  {
+    "ticketId": "TKT-42464",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-09T06:20:47.258Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1773037247776"
+  },
+  {
+    "ticketId": "TKT-15364",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-09T06:20:47.258Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1773037247821"
+  },
+  {
+    "ticketId": "TKT-64714",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-09T06:20:47.258Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1773037247865"
+  },
+  {
+    "ticketId": "TKT-11946",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-09T06:20:47.258Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1773037247894"
+  },
+  {
+    "ticketId": "TKT-86959",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-09T06:20:47.258Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1773037247922"
+  },
+  {
+    "ticketId": "TKT-22569",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-09T06:20:47.258Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1773037247939"
+  },
+  {
+    "ticketId": "TKT-30660",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-09T06:20:47.258Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1773037247957"
+  },
+  {
+    "ticketId": "TKT-87465",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-09T06:20:47.258Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1773037247973"
+  },
+  {
+    "ticketId": "TKT-17726",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-09T06:20:47.258Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1773037248013"
+  },
+  {
+    "ticketId": "TKT-17193",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-09T06:20:47.258Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1773037248036"
+  },
+  {
+    "ticketId": "TKT-61036",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-09T06:20:47.258Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1773037248060"
+  },
+  {
+    "ticketId": "TKT-72650",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-09T06:20:47.258Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1773037248114"
+  },
+  {
+    "ticketId": "TKT-51747",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-09T06:20:47.258Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1773037248132"
+  },
+  {
+    "ticketId": "TKT-60002",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-09T06:20:47.258Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1773037248148"
+  },
+  {
+    "ticketId": "TKT-36669",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-09T06:20:47.258Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1773037248191"
+  },
+  {
+    "ticketId": "TKT-19467",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-09T06:20:47.258Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1773037248230"
+  },
+  {
+    "ticketId": "TKT-11560",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-09T06:20:47.258Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1773037248248"
+  },
+  {
+    "ticketId": "TKT-50284",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-09T06:20:47.258Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1773037248288"
+  },
+  {
+    "ticketId": "TKT-55488",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-09T06:20:47.258Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1773037248306"
+  },
+  {
+    "ticketId": "TKT-53744",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-09T06:20:47.258Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1773037248321"
+  },
+  {
+    "ticketId": "TKT-18665",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-09T06:20:47.258Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1773037248351"
+  },
+  {
+    "ticketId": "TKT-78570",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-09T06:20:47.258Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1773037248378"
+  },
+  {
+    "ticketId": "TKT-12331",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-09T06:20:47.258Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1773037248488"
+  },
+  {
+    "ticketId": "TKT-57995",
+    "status": "Servise Gönderildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-09T12:47:22.515Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1773060442982"
+  },
+  {
+    "ticketId": "TKT-57995",
+    "status": "Servisten Döndü",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-09T12:47:57.251Z",
+    "repairType": "Garantili",
+    "serviceNote": "BIOS Update edildi sorun giderildi.",
+    "id": "1773060477036"
+  },
+  {
+    "ticketId": "TKT-57995",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-13T11:09:44.962Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1773400184907"
+  },
+  {
+    "ticketId": "TKT-1062",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Onur YILMAZ",
+    "timestamp": "2026-03-18T10:36:38.760Z",
+    "repairType": "Garantili",
+    "serviceNote": "Sorun görülmedi. Bakım yapıldı.",
+    "id": "1773830198923"
+  },
+  {
+    "ticketId": "TKT-1053",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-18T11:07:09.404Z",
+    "repairType": "Garantili",
+    "serviceNote": "Cihazda sorun görülmedi bakım yapıldı. ",
+    "id": "1773832029493"
+  },
+  {
+    "ticketId": "TKT-1051",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-18T11:07:48.723Z",
+    "repairType": "İşlem Yapılmadı",
+    "serviceNote": "Cihazda sorun görülmedi bakımı yapıldı. ",
+    "id": "1773832068804"
+  },
+  {
+    "ticketId": "TKT-36669",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-23T07:12:46.777Z",
+    "repairType": "Garantili",
+    "serviceNote": "Sorun görülmedi bakım yapıldı. ",
+    "id": "1774249966838"
+  },
+  {
+    "ticketId": "TKT-17726",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-23T07:13:57.112Z",
+    "repairType": "Garantili",
+    "serviceNote": "river güncellemeleri LENOVO VANTAGE üzerinde yapılması öneriliyor. Bakım yapıldı.",
+    "id": "1774250037122"
+  },
+  {
+    "ticketId": "TKT-42464",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-23T07:14:36.028Z",
+    "repairType": "Garantili",
+    "serviceNote": "Bakım ve bios update yapıldı.",
+    "id": "1774250076042"
+  },
+  {
+    "ticketId": "TKT-1059",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-03-23T07:15:11.442Z",
+    "repairType": "Garantili",
+    "serviceNote": "Klavye değişti bakım yapıldı. ",
+    "id": "1774250111453"
+  },
+  {
+    "ticketId": "TKT-11560",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-04-02T07:15:18.557Z",
+    "repairType": "Garantili",
+    "serviceNote": "Klavye değiştirildi, sorun giderildi.",
+    "id": "1775114118280"
+  },
+  {
+    "ticketId": "TKT-15364",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-04-02T07:15:47.680Z",
+    "repairType": "Garantili",
+    "serviceNote": "Klavye değiştirildi, sorun giderildi.",
+    "id": "1775114147360"
+  },
+  {
+    "ticketId": "TKT-60002",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-04-02T07:16:13.930Z",
+    "repairType": "Garantili",
+    "serviceNote": "Klavye değiştirildi, sorun giderildi.",
+    "id": "1775114173609"
+  },
+  {
+    "ticketId": "TKT-17113",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-04-02T07:17:27.659Z",
+    "repairType": "Garantili",
+    "serviceNote": "Klavye ve anakart değiştirildi, sorun giderildi.",
+    "id": "1775114247346"
+  },
+  {
+    "ticketId": "TKT-64714",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-04-02T07:18:48.579Z",
+    "repairType": "Garantili",
+    "serviceNote": "Anakart değiştirildi, sorun giderildi.",
+    "id": "1775114328268"
+  },
+  {
+    "ticketId": "TKT-55488",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-04-02T07:19:11.812Z",
+    "repairType": "Garantili",
+    "serviceNote": "Klavye değiştirildi, sorun giderildi.",
+    "id": "1775114351490"
+  },
+  {
+    "ticketId": "TKT-78570",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-04-02T07:19:55.244Z",
+    "repairType": "Garantili",
+    "serviceNote": "Klavye değiştirildi, sorun giderildi.",
+    "id": "1775114394933"
+  },
+  {
+    "ticketId": "TKT-86959",
+    "status": "Müşteriye Teslim Edildi",
+    "personnel": "Orhan BEKTAŞ",
+    "timestamp": "2026-04-02T07:20:26.323Z",
+    "repairType": "Garantili",
+    "serviceNote": "Anakart değiştirildi, sorun giderildi.",
+    "id": "1775114426011"
+  },
+  {
+    "ticketId": "TKT-15461",
+    "status": "Müşteriden Alındı",
+    "personnel": "Kaan İLHAN",
+    "timestamp": "2026-04-09T12:28:14.492Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1775737695189"
+  },
+  {
+    "ticketId": "TKT-58413",
+    "status": "Müşteriden Alındı",
+    "personnel": "Kaan İLHAN",
+    "timestamp": "2026-04-09T12:28:14.492Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1775737695219"
+  },
+  {
+    "ticketId": "TKT-83297",
+    "status": "Müşteriden Alındı",
+    "personnel": "Kaan İLHAN",
+    "timestamp": "2026-04-09T12:28:14.492Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1775737695242"
+  },
+  {
+    "ticketId": "TKT-34360",
+    "status": "Müşteriden Alındı",
+    "personnel": "Kaan İLHAN",
+    "timestamp": "2026-04-09T12:28:14.492Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1775737695271"
+  },
+  {
+    "ticketId": "TKT-69430",
+    "status": "Müşteriden Alındı",
+    "personnel": "Kaan İLHAN",
+    "timestamp": "2026-04-09T12:28:14.492Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1775737695296"
+  },
+  {
+    "ticketId": "TKT-17367",
+    "status": "Müşteriden Alındı",
+    "personnel": "Kaan İLHAN",
+    "timestamp": "2026-04-09T12:28:14.492Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1775737695322"
+  },
+  {
+    "ticketId": "TKT-62531",
+    "status": "Müşteriden Alındı",
+    "personnel": "Kaan İLHAN",
+    "timestamp": "2026-04-09T12:28:14.492Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1775737695351"
+  },
+  {
+    "ticketId": "TKT-42302",
+    "status": "Müşteriden Alındı",
+    "personnel": "Kaan İLHAN",
+    "timestamp": "2026-04-09T12:28:14.492Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1775737695370"
+  },
+  {
+    "ticketId": "TKT-51569",
+    "status": "Müşteriden Alındı",
+    "personnel": "Kaan İLHAN",
+    "timestamp": "2026-04-09T12:28:14.492Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1775737695390"
+  },
+  {
+    "ticketId": "TKT-15461",
+    "status": "Servise Gönderildi",
+    "personnel": "Kaan İLHAN",
+    "timestamp": "2026-04-09T12:28:14.492Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1775737695411"
+  },
+  {
+    "ticketId": "TKT-95456",
+    "status": "Müşteriden Alındı",
+    "personnel": "Kaan İLHAN",
+    "timestamp": "2026-04-09T12:28:14.492Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1775737695429"
+  },
+  {
+    "ticketId": "TKT-43877",
+    "status": "Müşteriden Alındı",
+    "personnel": "Kaan İLHAN",
+    "timestamp": "2026-04-09T12:28:14.492Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1775737695449"
+  },
+  {
+    "ticketId": "TKT-83297",
+    "status": "Servise Gönderildi",
+    "personnel": "Kaan İLHAN",
+    "timestamp": "2026-04-09T12:28:14.492Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1775737695471"
+  },
+  {
+    "ticketId": "TKT-58413",
+    "status": "Servise Gönderildi",
+    "personnel": "Kaan İLHAN",
+    "timestamp": "2026-04-09T12:28:14.492Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1775737695488"
+  },
+  {
+    "ticketId": "TKT-34360",
+    "status": "Servise Gönderildi",
+    "personnel": "Kaan İLHAN",
+    "timestamp": "2026-04-09T12:28:14.492Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1775737695510"
+  },
+  {
+    "ticketId": "TKT-69430",
+    "status": "Servise Gönderildi",
+    "personnel": "Kaan İLHAN",
+    "timestamp": "2026-04-09T12:28:14.492Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1775737695529"
+  },
+  {
+    "ticketId": "TKT-17367",
+    "status": "Servise Gönderildi",
+    "personnel": "Kaan İLHAN",
+    "timestamp": "2026-04-09T12:28:14.492Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1775737695549"
+  },
+  {
+    "ticketId": "TKT-62531",
+    "status": "Servise Gönderildi",
+    "personnel": "Kaan İLHAN",
+    "timestamp": "2026-04-09T12:28:14.492Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1775737695574"
+  },
+  {
+    "ticketId": "TKT-42302",
+    "status": "Servise Gönderildi",
+    "personnel": "Kaan İLHAN",
+    "timestamp": "2026-04-09T12:28:14.492Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1775737695598"
+  },
+  {
+    "ticketId": "TKT-51569",
+    "status": "Servise Gönderildi",
+    "personnel": "Kaan İLHAN",
+    "timestamp": "2026-04-09T12:28:14.492Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1775737695615"
+  },
+  {
+    "ticketId": "TKT-95456",
+    "status": "Servise Gönderildi",
+    "personnel": "Kaan İLHAN",
+    "timestamp": "2026-04-09T12:28:14.492Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1775737695637"
+  },
+  {
+    "ticketId": "TKT-43877",
+    "status": "Servise Gönderildi",
+    "personnel": "Kaan İLHAN",
+    "timestamp": "2026-04-09T12:28:14.492Z",
+    "repairType": null,
+    "serviceNote": null,
+    "id": "1775737695658"
+  }
+]

@@ -1,0 +1,22 @@
+[
+  {
+    "id": "global",
+    "customers": [
+      "Deloitte",
+      "Euler Hermes",
+      "Marks&Spencer"
+    ],
+    "brandsModels": {
+      "Lenovo": [
+	"T14 Gen2",
+        "T14 Gen3",
+        "T14 Gen5",
+        "T14s Gen3",
+	"X13 Gen3",
+        "X13 Gen4",
+        "X13 Yoga Gen2",
+        "Yoga 3 Pro"
+      ]
+    }
+  }
+]

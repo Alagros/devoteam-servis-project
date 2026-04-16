@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  # Nginx Proxy Manager (Trafik Yöneticisi)
+  nginx-proxy-manager:
+    image: 'jc21/nginx-proxy-manager:latest'
+    container_name: nginx-proxy-manager
+    restart: unless-stopped
+    ports:
+      - '2052:80'    # Dışarıdan 2052 gelince NPM içindeki 80'e (HTTP) gitsin
+      - '2053:443'   # Dışarıdan 2053 gelince NPM içindeki 443'e (HTTPS) gitsin
+      - '81:81'      # Yönetim paneli (Yerelde kalacak)
+    volumes:
+      - ./npm-data:/data
+      - ./letsencrypt:/etc/letsencrypt
+
+  devoteam-app:
+    build: .
+    container_name: devoteam-app
+    command: sh -c "npm run build && npx serve -s dist -l 4000"
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    restart: always
+
+  db-postgres:
+    image: postgres:16-alpine
+    container_name: devoteam-db-pg
+    restart: always
+    environment:
+      POSTGRES_USER: devoteam
+      POSTGRES_PASSWORD: devoteam_db_password
+      POSTGRES_DB: devoteam_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # API Sunucun
+  devoteam-db:
+    build: .
+    container_name: devoteam-db
+    command: node server.js
+    environment:
+      DATABASE_URL: postgres://devoteam:devoteam_db_password@db-postgres:5432/devoteam_db
+    ports:
+      - "4001:4001"
+    depends_on:
+      - db-postgres
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    restart: always
+
+volumes:
+  pgdata:

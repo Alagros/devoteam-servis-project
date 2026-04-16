@@ -1,0 +1,38 @@
+[
+  {
+    "id": "9325",
+    "username": "onur",
+    "password": "147896325",
+    "displayName": "Onur YILMAZ",
+    "role": "admin"
+  },
+  {
+    "id": "0007",
+    "username": "selim",
+    "password": "0000",
+    "displayName": "Selim ŞAHİN",
+    "role": "admin"
+  },
+  {
+    "id": "0008",
+    "username": "orhan",
+    "password": "1234",
+    "displayName": "Orhan BEKTAŞ",
+    "role": "tech",
+    "permissions": {
+      "canManageCustomers": true,
+      "canManageBrands": true
+    }
+  },
+  {
+    "id": "1fc6",
+    "username": "kaan",
+    "password": "4321",
+    "displayName": "Kaan İLHAN",
+    "role": "tech",
+    "permissions": {
+      "canManageCustomers": true,
+      "canManageBrands": true
+    }
+  }
+]
