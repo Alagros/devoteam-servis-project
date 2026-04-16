@@ -42,7 +42,7 @@ services:
   devoteam-db:
     build: .
     container_name: devoteam-db
-    command: node server.js
+    command: sh -c "node migrate.cjs && node server.js"
     environment:
       DATABASE_URL: postgres://devoteam:devoteam_db_password@db-postgres:5432/devoteam_db
     ports:
