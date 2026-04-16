@@ -62,6 +62,39 @@ const deleteDbRecord = async (resource, id) => {
     await pool.query('DELETE FROM docs WHERE resource = $1 AND id = $2', [resource, String(id)]);
 };
 
+// --- YEDEKLEME İŞLEMLERİ ---
+const backupDir = path.join(__dirname, 'backups');
+if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir);
+
+const createBackup = async () => {
+    try {
+        const res = await pool.query('SELECT * FROM docs');
+        const filename = `backup-${new Date().toISOString().split('T')[0]}.json`;
+        fs.writeFileSync(path.join(backupDir, filename), JSON.stringify(res.rows));
+        console.log(`✅ Yedek alındı: ${filename}`);
+        
+        const files = fs.readdirSync(backupDir);
+        const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+        files.forEach(f => {
+            const stats = fs.statSync(path.join(backupDir, f));
+            if (stats.mtimeMs < thirtyDaysAgo) {
+                fs.unlinkSync(path.join(backupDir, f));
+                console.log(`🗑️ Eski yedek silindi: ${f}`);
+            }
+        });
+    } catch (e) { console.error('Yedekleme hatası:', e); }
+};
+
+setInterval(() => {
+    const now = new Date();
+    if (now.getHours() === 3) {
+        const filename = `backup-${now.toISOString().split('T')[0]}.json`;
+        if (!fs.existsSync(path.join(backupDir, filename))) {
+            createBackup();
+        }
+    }
+}, 60 * 60 * 1000);
+
 // --- DİNAMİK REST API YÖNETİMİ ---
 const resources = ['tickets', 'users', 'logs', 'photos'];
 
@@ -157,8 +190,36 @@ app.post('/auth/login', async (req, res) => {
     }
 });
 
+// --- SYSTEM YEDEKLEME API ---
+app.get('/system/backup', async (req, res) => {
+    try {
+        const data = await pool.query('SELECT * FROM docs');
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Disposition', `attachment; filename="devoteam-db-backup-${new Date().toISOString().split('T')[0]}.json"`);
+        res.send(JSON.stringify(data.rows));
+    } catch (e) {
+        res.status(500).json({ error: 'Yedek indirme başarısız' });
+    }
+});
+
+app.post('/system/restore', async (req, res) => {
+    try {
+        const rows = req.body;
+        if (!Array.isArray(rows)) return res.status(400).json({ error: 'Geçersiz format' });
+        
+        for (const row of rows) {
+            if (row.resource && row.id && row.data) {
+                await writeDbRecord(row.resource, row.id, row.data);
+            }
+        }
+        res.json({ success: true, message: `${rows.length} kayıt başarıyla geri yüklendi.` });
+    } catch (e) {
+        res.status(500).json({ error: 'Geri yükleme başarısız' });
+    }
+});
+
 // Sunucuyu Başlat
 app.listen(4001, () => {
     console.log('✅ YENİ API SUNUCUSU 4001 PORTUNDA ÇALIŞIYOR!');
-    console.log('📂 Verileriniz artık tek bir db.json dosyası yerine, "data" klasöründe parçalı halde tutulacak.');
-});
+    console.log('📂 Verileriniz artık POSTGRESQL veritabanında tutulmaktadır.');
+});

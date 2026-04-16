@@ -53,6 +53,12 @@ services:
       - ./:/app
       - /app/node_modules
     restart: always
+  # Cloudflare Zero Trust Tunnel
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: devoteam-cloudflared
+    restart: always
+    command: tunnel --no-autoupdate run --token eyJhIjoiZWJkMWNkNzA5YWRkNjQ2MDllMGU0NDZjY2VmYjNhOTIiLCJ0IjoiNGFkMDFiY2QtYzM5OS00Mzk1LTlkZTUtMGE5YmViMDA0MzE2IiwicyI6Ik1tRXlOR0l3WWpjdE9HRTFPUzAwTm1NNUxUZzVZVFl0TWpJM016STRNV0UyTldSbCJ9
 
 volumes:
   pgdata:

@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Database and Backups
+npm-data
+backups
+pgdata
+*.sqlite
+data/

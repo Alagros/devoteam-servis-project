@@ -3,11 +3,12 @@ import {
   Camera, Search, CheckCircle, Truck, Package, History, LogOut, 
   Users, Plus, ArrowRight, Smartphone, Wrench, X, ChevronRight,
   CheckSquare, ClipboardCheck, AlertCircle, Settings as SettingsIcon, Trash2,
-  Clock, ChevronDown, ChevronUp, Info, WifiOff, Shield, Key, Edit, Undo2, Save, RefreshCw, Download, ImagePlus
+  Clock, ChevronDown, ChevronUp, Info, WifiOff, Shield, Key, Edit, Undo2, Save, RefreshCw, Download, ImagePlus, Upload
 } from 'lucide-react';
 
 // --- SUNUCU (API) AYARLARI ---
-const API_URL = `${window.location.protocol}//${window.location.hostname}:4001`;
+const isProductionDomain = window.location.hostname.includes('.devoteam.net.tr');
+const API_URL = isProductionDomain ? `https://api.devoteam.net.tr` : `${window.location.protocol}//${window.location.hostname}:4001`;
 const API_KEY = 'devoteam_secure_api_key_2026';
 
 const apiFetch = (url, options = {}) => {
@@ -138,6 +139,18 @@ export default function App() {
     
     document.documentElement.classList.add('dark');
   }, []);
+
+  const [hash, setHash] = useState(window.location.hash);
+  useEffect(() => {
+    const handleHash = () => setHash(window.location.hash);
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
+
+  const isStatusSubdomain = window.location.hostname.startsWith('status.');
+  if (hash.startsWith('#/durum') || isStatusSubdomain) {
+    return <CustomerStatusView />;
+  }
 
   // Oturum Yönetimi
   const [user, setUser] = useState(() => {
@@ -452,7 +465,7 @@ export default function App() {
   };
 
   const handleStatusChangeRequest = (targetStatus, itemIds) => {
-    if (targetStatus === 'Servisten Döndü') {
+    if (targetStatus === 'Servisten Döndü' || targetStatus === 'Müşteriye Teslim Edildi') {
       setActionModal({ isOpen: true, targetStatus, itemIds });
     } else {
       setConfirmDialog({
@@ -646,6 +659,58 @@ function SettingsView({ customers, setCustomers, brandsModels, setBrandsModels, 
     } catch (e) { showToast('İşlem sırasında hata oluştu!', 'error'); }
   };
 
+  const handleDownloadBackup = async () => {
+    try {
+      showToast('Yedek hazırlanıyor...', 'info');
+      const res = await apiFetch(`${API_URL}/system/backup`);
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `devoteam-db-backup-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        showToast('Yedek başarıyla indirildi!');
+      } else {
+        showToast('Yedek indirme başarısız oldu!', 'error');
+      }
+    } catch(e) { showToast('Bağlantı hatası.', 'error'); }
+  };
+
+  const handleRestoreBackup = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    if(!window.confirm('Veritabanını bu yedek dosyası ile güncellemek istediğinize emin misiniz? Var olan veriler ezilebilir!')) {
+      e.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const json = JSON.parse(event.target.result);
+        const res = await apiFetch(`${API_URL}/system/restore`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(json)
+        });
+        if (res.ok) {
+          showToast('Yedek başarıyla yüklendi! Lütfen sayfayı yenileyin.', 'success');
+        } else {
+          showToast('Yedeği yüklerken hata oluştu!', 'error');
+        }
+      } catch (err) {
+        showToast('Geçersiz JSON dosyası!', 'error');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
   const handleDeleteUser = async (id, username) => {
     if (window.confirm(`'${username}' adlı kullanıcıyı silmek istediğinize emin misiniz?`)) {
       try {
@@ -817,6 +882,33 @@ function SettingsView({ customers, setCustomers, brandsModels, setBrandsModels, 
         </div>
       )}
 
+      {currentUser?.role === 'admin' && (
+        <div className="bg-slate-900 rounded-2xl shadow-sm border border-slate-800 p-5 md:p-6 mt-6">
+          <h3 className="text-sm font-bold text-slate-400 mb-4 uppercase tracking-widest border-b border-slate-800 pb-3 flex items-center gap-2"><SettingsIcon size={18}/> Sistem Veri Yönetimi</h3>
+          
+          <div className="bg-[#0f172a] p-5 rounded-2xl border border-slate-800 mb-4 flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-600 transition-all group-hover:w-2"></div>
+            <div>
+               <div className="font-bold text-white mb-1">Veritabanı Yedeğini İndir</div>
+               <div className="text-xs text-slate-400">Sunucudaki tüm kayıtları, ayarları ve logları tek bir JSON dosyası olarak indirir.</div>
+            </div>
+            <button onClick={handleDownloadBackup} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md flex items-center justify-center gap-2 transition-all"><Download size={16}/> Yedek İndir</button>
+          </div>
+
+          <div className="bg-[#0f172a] p-5 rounded-2xl border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-1.5 h-full bg-orange-600 transition-all group-hover:w-2"></div>
+            <div>
+               <div className="font-bold text-orange-400 mb-1">Veritabanını Yedekten Dön</div>
+               <div className="text-xs text-slate-400">İndirilen JSON yedeğini yükleyerek sunucudaki kayıtları günceller/üzerine yazar.</div>
+            </div>
+            <label className="bg-orange-600 hover:bg-orange-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all">
+               <Upload size={16}/> JSON Yükle
+               <input type="file" accept=".json" className="hidden" onChange={handleRestoreBackup} />
+            </label>
+          </div>
+        </div>
+      )}
+
       {userModalInfo.isOpen && <UserModal mode={userModalInfo.mode} initialData={userModalInfo.data} onClose={() => setUserModalInfo({ isOpen: false, mode: 'add', data: null })} onSubmit={handleSaveUser} />}
     </div>
   );
@@ -923,7 +1015,7 @@ function ActionModal({ targetStatus, itemIds, tickets, onClose, onSubmit }) {
     <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[150] flex items-end md:items-center justify-center">
       <div className="bg-slate-900 w-full max-w-2xl md:rounded-3xl rounded-t-3xl max-h-[90vh] flex flex-col shadow-2xl animate-in slide-in-from-bottom-8 md:slide-in-from-bottom-0 md:zoom-in-95 border border-transparent border-slate-800">
         <div className="flex justify-between items-center p-5 border-b border-slate-800 bg-slate-950 md:rounded-t-3xl rounded-t-3xl">
-          <div><h3 className="font-black text-xl text-white">Servisten Teslim Alma</h3><p className="text-xs text-slate-400 font-medium mt-1">{items.length} adet cihaz işaretlenecek.</p></div>
+          <div><h3 className="font-black text-xl text-white">{targetStatus === 'Müşteriye Teslim Edildi' ? 'Müşteriye Teslim Etme' : 'Servisten Teslim Alma'}</h3><p className="text-xs text-slate-400 font-medium mt-1">{items.length} adet cihaz işaretlenecek.</p></div>
           <button onClick={onClose} className="p-2 bg-slate-900 rounded-full text-slate-500 hover:bg-slate-800 border border-slate-700 shadow-sm"><X size={20} /></button>
         </div>
         <div className="p-4 overflow-y-auto flex-1 space-y-4 bg-slate-950/50">
@@ -2140,6 +2232,114 @@ function TimelineItem({ title, date, personnel, isCompleted, isLast }) {
         <div className={`text-sm font-black ${isCompleted ? 'text-white' : 'text-slate-500'}`}>{title}</div>
         {date && <div className="text-xs text-slate-400 mt-1.5 font-mono font-medium">{formatDateTime(date)}</div>}
         {personnel && isCompleted && <div className="text-[10px] text-slate-500 mt-1 uppercase tracking-wide">İşlem: <span className="font-bold text-slate-300">{personnel}</span></div>}
+      </div>
+    </div>
+  );
+}
+
+function CustomerStatusView() {
+  const [sn, setSn] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [ticketData, setTicketData] = useState(null);
+  
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!sn.trim()) return;
+    setLoading(true); setError(''); setTicketData(null);
+    try {
+      const res = await apiFetch(`${API_URL}/tickets`);
+      if (res.ok) {
+        const allTickets = await res.json();
+        const found = allTickets.filter(t => t.serialNumber.trim().toUpperCase() === sn.trim().toUpperCase());
+        if (found.length > 0) {
+          found.sort((a,b) => new Date(b.dateReceived) - new Date(a.dateReceived));
+          setTicketData(found);
+        } else {
+          setError('Bu seri numarasına ait kayıt bulunamadı.');
+        }
+      } else {
+        setError('Sunucu hatası.');
+      }
+    } catch (err) {
+      setError('Bağlantı hatası.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 flex flex-col items-center p-4 text-slate-100">
+      <div className="w-full max-w-lg mt-10">
+         <div className="text-center mb-10">
+            <img src={LOGO_URL} alt="Logo" className="h-16 mx-auto mb-6 object-contain drop-shadow-lg" />
+            <h1 className="text-3xl font-black text-white uppercase tracking-widest drop-shadow-md">Onarım Durumu</h1>
+            <p className="text-slate-400 text-sm mt-3 font-medium">Servise bıraktığınız cihazınızın seri numarasını (SN) girerek güncel durumunu öğrenebilirsiniz.</p>
+         </div>
+         <form onSubmit={handleSearch} className="bg-[#0f172a] p-6 rounded-3xl border border-slate-800 shadow-2xl mb-8 flex flex-col gap-4">
+            <div>
+               <div className="relative">
+                  <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+                  <input type="text" value={sn} onChange={e => setSn(e.target.value)} placeholder="Seri No (Örn: ABC12345)" className="w-full pl-12 pr-5 py-4 rounded-xl border border-slate-700 bg-slate-900 text-white font-mono font-bold focus:ring-2 focus:ring-blue-500 outline-none uppercase shadow-inner" />
+               </div>
+            </div>
+            <button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl transition-all shadow-lg disabled:opacity-50">{loading ? 'Sorgulanıyor...' : 'Durumu Sorgula'}</button>
+         </form>
+
+         {error && <div className="bg-red-900/30 border border-red-900/50 text-red-400 p-4 rounded-2xl text-center font-bold text-sm mb-6 flex items-center justify-center gap-2"><AlertCircle size={18}/> {error}</div>}
+
+         {ticketData && (
+            <div className="bg-[#0f172a] border border-slate-800 rounded-3xl overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-8">
+               <div className="p-6 border-b border-slate-800 bg-slate-900/50">
+                  <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Cihaz Bilgisi</div>
+                  <div className="text-xl font-black text-white flex items-center gap-2"><Smartphone size={20} className="text-slate-400"/> {ticketData[0].brand} {ticketData[0].model}</div>
+                  <div className="mt-4 flex gap-2 w-full justify-between items-center text-xs text-slate-400">
+                    <span className="font-mono font-bold bg-slate-800 border border-slate-700 px-2.5 py-1.5 rounded-lg text-slate-300">SN: {ticketData[0].serialNumber}</span>
+                    <span className="font-bold bg-blue-900/30 text-blue-400 px-2.5 py-1.5 rounded-lg border border-blue-900/50">{ticketData.length} Kayıt Bulundu</span>
+                  </div>
+               </div>
+               
+               <div className="p-6 space-y-8 bg-slate-950/20">
+                 {ticketData.map((t, idx) => (
+                    <div key={t.id} className="relative pb-8 border-b border-slate-800 last:border-0 last:pb-0">
+                       <div className="mb-4 flex items-center justify-between">
+                          <StatusBadge status={t.status} />
+                          <span className="text-xs font-bold text-slate-500">{formatDateTime(t.dateReceived)}</span>
+                       </div>
+                       
+                       <div className="space-y-3">
+                         <div className="text-sm text-slate-300 font-medium bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-sm relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-1 h-full bg-slate-600"></div>
+                            <span className="text-[10px] text-slate-500 uppercase font-black tracking-widest block mb-1.5 flex items-center gap-1"><AlertCircle size={12}/> Şikayetiniz</span>
+                            <div className="leading-relaxed">{t.complaint || '-'}</div>
+                         </div>
+                         
+                         {t.repairType && (
+                           <div className="text-sm text-slate-200 font-medium bg-blue-900/20 p-4 rounded-xl border border-blue-900/40 shadow-sm relative overflow-hidden">
+                              <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
+                              <span className="text-[10px] text-blue-400 uppercase font-black tracking-widest block mb-1.5 flex items-center gap-1"><Wrench size={12}/> Yapılan İşlem ({t.repairType})</span>
+                              <div className="leading-relaxed">{t.serviceNote || '-'}</div>
+                           </div>
+                         )}
+                       </div>
+                       
+                       <div className="grid grid-cols-2 gap-4 mt-5 text-xs bg-slate-900 border border-slate-800 rounded-xl p-3 shadow-inner">
+                          <div>
+                            <span className="text-slate-500 uppercase font-black block mb-1 text-[9px] tracking-widest flex items-center gap-1"><Package size={10}/> Teslim Alınma</span>
+                            <span className="text-slate-300 font-black">{formatDateTime(t.dateReceived)}</span>
+                          </div>
+                          <div className={t.dateDelivered ? "text-green-400" : "text-orange-400"}>
+                            <span className="text-slate-500 uppercase font-black block mb-1 text-[9px] tracking-widest flex items-center gap-1"><Package size={10}/> Servis Bitiş</span>
+                            <span className="font-black">{t.dateDelivered ? formatDateTime(t.dateDelivered) : 'Devam Ediyor'}</span>
+                          </div>
+                       </div>
+                    </div>
+                 ))}
+               </div>
+            </div>
+         )}
+         
+         <div className="text-center mt-8 text-xs text-slate-600 font-medium">Bu ekrandaki veriler bilgilendirme amaçlıdır.</div>
       </div>
     </div>
   );
