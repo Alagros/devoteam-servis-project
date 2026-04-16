@@ -2428,6 +2428,8 @@ function CustomerStatusView() {
                      </div>
                   )}
                </div>
+            </div>
+         )}
          
          <div className="text-center mt-8 text-xs text-slate-600 font-medium">Bu ekrandaki veriler bilgilendirme amaçlıdır.</div>
       </div>
