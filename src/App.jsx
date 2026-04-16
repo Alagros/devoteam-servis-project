@@ -2406,7 +2406,10 @@ function RootSetupWizard({ currentUser, onAdminCreated, onDisableBackdoor }) {
   return (
     <div className="fixed inset-0 bg-slate-950 z-[200] flex items-center justify-center p-4 backdrop-blur-md">
       <div className="w-full max-w-md bg-slate-900 rounded-[2.5rem] border border-slate-800 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500">
-        <div className="p-8 text-center bg-slate-950/50">
+        <div className="p-8 text-center bg-slate-950/50 relative">
+           <button onClick={() => { localStorage.removeItem('tech_servis_user'); window.location.reload(); }} className="absolute top-4 right-4 text-slate-500 hover:text-slate-300 text-xs font-bold border border-slate-800 px-3 py-1.5 rounded-xl bg-slate-900 transition-all flex items-center gap-2">
+              <LogOut size={14} /> Çıkış Yap
+           </button>
            <div className="w-20 h-20 bg-blue-600/20 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-blue-500/30">
               <Shield size={40} className="text-blue-500" />
            </div>

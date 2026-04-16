@@ -125,9 +125,21 @@ resources.forEach(resource => {
 
     // POST: Yeni kayıt ekle
     app.post(`/${resource}`, async (req, res) => {
-        const newItem = { ...req.body, id: req.body.id || Date.now().toString() };
-        await writeDbRecord(resource, newItem.id, newItem);
-        res.status(201).json(newItem);
+        try {
+            // Eğer users tablosuysa kullanıcı adı çakışmasını kontrol et
+            if (resource === 'users' && req.body.username) {
+                const data = await readDb('users');
+                const exists = data.find(u => u.username === req.body.username);
+                if (exists) return res.status(400).json({ error: "Bu kullanıcı adı zaten kullanılmaktadır." });
+            }
+
+            const newItem = { ...req.body, id: req.body.id || Date.now().toString() };
+            await writeDbRecord(resource, newItem.id, newItem);
+            res.status(201).json(newItem);
+        } catch (e) {
+            console.error(`POST /${resource} error:`, e);
+            res.status(500).json({ error: "Sunucu hatası oluştu." });
+        }
     });
 
     // PATCH: Sadece değişen veriyi güncelle
