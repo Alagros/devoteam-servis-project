@@ -2366,13 +2366,68 @@ function CustomerStatusView() {
                </div>
                
                <div className="p-6 space-y-8 bg-slate-950/20">
-                          </div>
-                       </div>
-                    </div>
-                 ))}
+                  {/* Sadece En Güncel Kayıt */}
+                  <div className="relative">
+                     <div className="mb-4 flex items-center justify-between">
+                        <StatusBadge status={ticketData[0].status} />
+                        <span className="text-xs font-bold text-slate-500">{formatDateTime(ticketData[0].dateReceived)}</span>
+                     </div>
+                     
+                     <div className="space-y-4">
+                        <div className="text-sm text-slate-300 font-medium bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-sm relative overflow-hidden">
+                           <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
+                           <span className="text-[10px] text-blue-400 uppercase font-black tracking-widest block mb-1.5 flex items-center gap-1"><AlertCircle size={12}/> Mevcut Kayıt Şikayeti</span>
+                           <div className="leading-relaxed">{ticketData[0].complaint || '-'}</div>
+                        </div>
+
+                        {ticketData[0].repairType && (
+                           <div className="text-sm text-slate-300 font-medium bg-blue-900/10 p-4 rounded-xl border border-blue-900/30 shadow-sm relative overflow-hidden">
+                              <div className="absolute top-0 left-0 w-1 h-full bg-blue-400"></div>
+                              <span className="text-[10px] text-blue-400 uppercase font-black tracking-widest block mb-1.5 flex items-center gap-1"><Wrench size={12}/> Uygulanan İşlem ({ticketData[0].repairType})</span>
+                              <div className="leading-relaxed">{ticketData[0].serviceNote || '-'}</div>
+                           </div>
+                        )}
+                     </div>
+                  </div>
+
+                  {/* Geçmiş Kayıtlar Accordion */}
+                  {ticketData.length > 1 && (
+                     <div className="pt-4 border-t border-slate-800/50">
+                        <button onClick={() => setShowHistory(!showHistory)} className="w-full flex items-center justify-between p-4 bg-slate-900/40 rounded-2xl hover:bg-slate-900 transition-all border border-slate-800 group">
+                           <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 group-hover:text-blue-400 transition-colors">
+                                 <History size={16} />
+                              </div>
+                              <span className="text-sm font-black text-slate-300">Geçmiş Servis Kayıtları ({ticketData.length - 1})</span>
+                           </div>
+                           {showHistory ? <ChevronUp size={20} className="text-slate-500" /> : <ChevronDown size={20} className="text-slate-500" />}
+                        </button>
+
+                        {showHistory && (
+                           <div className="mt-4 space-y-6 pl-4 border-l-2 border-slate-800 animate-in slide-in-from-top-2">
+                              {ticketData.slice(1).map((t) => (
+                                 <div key={t.id} className="relative">
+                                    <div className="flex items-center justify-between mb-2">
+                                       <span className="text-[10px] font-black text-slate-500">{formatDateTime(t.dateReceived)}</span>
+                                       <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-slate-800 text-slate-400 border border-slate-700">{t.status}</span>
+                                    </div>
+                                    <div className="text-xs text-slate-400 leading-relaxed italic border-l border-slate-700 pl-3">
+                                       <span className="text-[9px] uppercase font-black text-slate-600 block not-italic mb-0.5">Eski Şikayet:</span>
+                                       {t.complaint}
+                                    </div>
+                                    {t.serviceNote && (
+                                       <div className="mt-2 text-xs text-blue-400/70 leading-relaxed italic border-l border-blue-900/30 pl-3">
+                                          <span className="text-[9px] uppercase font-black text-blue-900 block not-italic mb-0.5">Uygulanan İşlem:</span>
+                                          {t.serviceNote}
+                                       </div>
+                                    )}
+                                 </div>
+                              ))}
+                           </div>
+                        )}
+                     </div>
+                  )}
                </div>
-            </div>
-         )}
          
          <div className="text-center mt-8 text-xs text-slate-600 font-medium">Bu ekrandaki veriler bilgilendirme amaçlıdır.</div>
       </div>
