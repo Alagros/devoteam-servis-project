@@ -164,6 +164,7 @@ export default function App() {
   const [brandsModels, setBrandsModels] = useState({});
   const [dataLoaded, setDataLoaded] = useState(false);
   const [serverError, setServerError] = useState(false); 
+  const [rootBackdoorEnabled, setRootBackdoorEnabled] = useState(true);
 
   const [currentView, setCurrentView] = useState(() => sessionStorage.getItem('tech_servis_view') || 'dashboard');
   const [selectedTicketId, setSelectedTicketId] = useState(() => sessionStorage.getItem('tech_servis_ticket') || null);
@@ -218,6 +219,7 @@ export default function App() {
         const data = await res.json();
         if(data.customers) setCustomers(data.customers);
         if(data.brandsModels) setBrandsModels(data.brandsModels);
+        if(data.rootBackdoorEnabled !== undefined) setRootBackdoorEnabled(data.rootBackdoorEnabled);
       }
     } catch (e) { console.error("Ayarlar çekilemedi:", e); }
   };
@@ -580,9 +582,23 @@ export default function App() {
           onTouchEnd={handleTouchEnd}
           className="flex-1 overflow-y-auto relative"
         >
+          {user?.isBackdoor && <RootSetupWizard currentUser={user} onAdminCreated={() => { fetchUsers(); showToast('Root erişimini kapatmak için ayarları kullanabilirsiniz.'); }} onDisableBackdoor={async () => {
+             const res = await apiFetch(`${API_URL}/settings/global`);
+             const current = await res.json();
+             await apiFetch(`${API_URL}/settings/global`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...current, rootBackdoorEnabled: false }) });
+             setRootBackdoorEnabled(false);
+             handleLogout();
+          }} />}
+          
           <main className={`p-4 md:p-8 max-w-6xl mx-auto ${serverError ? 'pt-10' : ''}`}>
             {currentView === 'dashboard' && <DashboardView tickets={tickets} onNavigate={handleNavigate} />}
-            {currentView === 'settings' && <SettingsView customers={customers} setCustomers={handleUpdateCustomers} brandsModels={brandsModels} setBrandsModels={handleUpdateBrands} currentUser={user} showToast={showToast} />}
+            {currentView === 'settings' && <SettingsView customers={customers} setCustomers={handleUpdateCustomers} brandsModels={brandsModels} setBrandsModels={handleUpdateBrands} currentUser={user} showToast={showToast} rootBackdoorEnabled={rootBackdoorEnabled} onToggleRootBackdoor={async (val) => {
+               const res = await apiFetch(`${API_URL}/settings/global`);
+               const current = await res.json();
+               await apiFetch(`${API_URL}/settings/global`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...current, rootBackdoorEnabled: val }) });
+               setRootBackdoorEnabled(val);
+               showToast(`Root erişimi ${val ? 'aktif edildi' : 'kapatıldı'}.`);
+            }} />}
             {currentView === 'list' && <TicketListView tickets={tickets} onNavigate={handleNavigate} isBulkMode={isBulkMode} setIsBulkMode={setIsBulkMode} selectedForBulk={selectedForBulk} setSelectedForBulk={setSelectedForBulk} onStatusChangeRequest={handleStatusChangeRequest} customers={customers} brandsModels={brandsModels} listFilters={listFilters} currentTime={currentTime} showToast={showToast} />}
             {currentView === 'new' && <NewTicketView allTickets={tickets} onSave={addTickets} user={user} onCancel={() => handleNavigate('list')} customers={customers} brandsModels={brandsModels} currentTime={currentTime} showToast={showToast} onCloseUnfinishedTicket={handleCloseUnfinishedTicket} />}
             {currentView === 'fastReturn' && <FastReturnView availableTickets={tickets.filter(t => t.status === 'Servise Gönderildi' || t.status === 'Müşteriden Alındı')} onSave={processFastReturns} onCancel={() => handleNavigate('list')} customers={customers} showToast={showToast} />}
@@ -620,8 +636,7 @@ export default function App() {
 }
 
 // --- SUB-COMPONENTS ---
-
-function SettingsView({ customers, setCustomers, brandsModels, setBrandsModels, currentUser, showToast }) {
+function SettingsView({ customers, setCustomers, brandsModels, setBrandsModels, currentUser, showToast, rootBackdoorEnabled, onToggleRootBackdoor }) {
   const [newCustomer, setNewCustomer] = useState('');
   const [newBrand, setNewBrand] = useState('');
   const [newModel, setNewModel] = useState('');
@@ -906,6 +921,22 @@ function SettingsView({ customers, setCustomers, brandsModels, setBrandsModels, 
                <input type="file" accept=".json" className="hidden" onChange={handleRestoreBackup} />
             </label>
           </div>
+
+          {isAdmin && !currentUser.isBackdoor && (
+            <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800 mt-4 flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden group">
+              <div className={`absolute top-0 left-0 w-1.5 h-full transition-all group-hover:w-2 ${rootBackdoorEnabled ? 'bg-red-600' : 'bg-slate-600'}`}></div>
+              <div>
+                <div className="font-bold text-white mb-1 flex items-center gap-2">Root Arka Kapısı (Backdoor) {rootBackdoorEnabled ? <span className="text-[10px] bg-red-900/50 text-red-400 px-2 py-0.5 rounded-full">RİSKLİ</span> : <span className="text-[10px] bg-green-900/50 text-green-400 px-2 py-0.5 rounded-full">GÜVENLİ</span>}</div>
+                <div className="text-xs text-slate-400">root/1234 girişiyle sisteme her zaman erişilmesini sağlar. Güvenliğiniz için kapalı tutmanız önerilir.</div>
+              </div>
+              <button 
+                onClick={() => onToggleRootBackdoor(!rootBackdoorEnabled)} 
+                className={`px-5 py-2.5 rounded-xl text-sm font-bold shadow-md transition-all ${rootBackdoorEnabled ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-red-600 text-white hover:bg-red-700'}`}
+              >
+                {rootBackdoorEnabled ? 'Erişimi Kapat' : 'Erişimi Etkinleştir'}
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -2340,6 +2371,73 @@ function CustomerStatusView() {
          )}
          
          <div className="text-center mt-8 text-xs text-slate-600 font-medium">Bu ekrandaki veriler bilgilendirme amaçlıdır.</div>
+      </div>
+    </div>
+  );
+}
+
+function RootSetupWizard({ currentUser, onAdminCreated, onDisableBackdoor }) {
+  const [step, setStep] = useState(1);
+  const [formData, setFormData] = useState({ username: '', password: '', displayName: '', role: 'admin' });
+  const [loading, setLoading] = useState(false);
+
+  const handleCreateAdmin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await apiFetch(`${API_URL}/users`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      if (res.ok) {
+        setStep(2);
+        onAdminCreated();
+      } else {
+        alert('Kullanıcı oluşturulamadı. Kullanıcı adı zaten alınmış olabilir.');
+      }
+    } catch (err) {
+      alert('Bağlantı hatası.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-slate-950 z-[200] flex items-center justify-center p-4 backdrop-blur-md">
+      <div className="w-full max-w-md bg-slate-900 rounded-[2.5rem] border border-slate-800 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500">
+        <div className="p-8 text-center bg-slate-950/50">
+           <div className="w-20 h-20 bg-blue-600/20 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-blue-500/30">
+              <Shield size={40} className="text-blue-500" />
+           </div>
+           <h2 className="text-2xl font-black text-white">Sistem Kurulumu</h2>
+           <p className="text-slate-400 text-sm mt-2 font-medium">Güvenliğiniz için ilk admin hesabınızı oluşturun.</p>
+        </div>
+        
+        <div className="p-8">
+          {step === 1 ? (
+            <form onSubmit={handleCreateAdmin} className="space-y-4">
+               <div><label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Admin Kullanıcı Adı</label><input required type="text" value={formData.username} onChange={e => setFormData({...formData, username: e.target.value})} className="w-full px-5 py-4 rounded-2xl bg-slate-950 border border-slate-800 text-white font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Örn: admin_onur" /></div>
+               <div><label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Admin Şifresi</label><input required type="text" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className="w-full px-5 py-4 rounded-2xl bg-slate-950 border border-slate-800 text-white font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Güçlü bir şifre seçin" /></div>
+               <div><label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Görünür İsim</label><input required type="text" value={formData.displayName} onChange={e => setFormData({...formData, displayName: e.target.value})} className="w-full px-5 py-4 rounded-2xl bg-slate-950 border border-slate-800 text-white font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Örn: Onur Yılmaz" /></div>
+               <button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-2xl mt-4 shadow-lg shadow-blue-900/20 transition-all active:scale-95">{loading ? 'Kaydediliyor...' : 'Hesabı Oluştur ve Devam Et'}</button>
+            </form>
+          ) : (
+            <div className="text-center space-y-6 animate-in fade-in slide-in-from-bottom-4">
+               <div className="bg-green-900/20 border border-green-900/50 p-6 rounded-3xl">
+                  <CheckCircle size={32} className="text-green-500 mx-auto mb-3" />
+                  <p className="text-sm font-bold text-green-400">Yönetici hesabı başarıyla oluşturuldu!</p>
+               </div>
+               <div className="space-y-4">
+                  <p className="text-xs text-slate-400 font-medium px-4 leading-relaxed">Artık kendi hesabınızla giriş yapabilirsiniz. Güvenliğiniz için geçici <b>root (arka kapı)</b> erişimini şimdi kapatmak ister misiniz?</p>
+                  <div className="flex flex-col gap-3">
+                    <button onClick={() => { onDisableBackdoor(); }} className="w-full bg-red-600 hover:bg-red-700 text-white font-black py-4 rounded-2xl shadow-lg shadow-red-900/20">Evet, Root Erişimini Kapat</button>
+                    <button onClick={() => window.location.reload()} className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-4 rounded-2xl text-sm underline underline-offset-4">Şimdilik Açık Kalsın</button>
+                  </div>
+               </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

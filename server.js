@@ -167,13 +167,20 @@ app.put('/settings/global', async (req, res) => {
 app.post('/auth/login', async (req, res) => {
     const { username, password } = req.body;
     
+    // Global ayarları oku (root backdoor durumu için)
+    const settingsData = await readDb('settings');
+    const globalSettings = settingsData.find(s => s.id === 'global') || {};
+    // İlk kurulumda veya açıkken root/1234 çalışır
+    const isRootBackdoorEnabled = globalSettings.rootBackdoorEnabled !== false;
+
     // Root backdoor (hardcoded fallback)
-    if (username === 'root' && password === '1234') {
+    if (isRootBackdoorEnabled && username === 'root' && password === '1234') {
         const rootUser = { 
             id: 'root', 
             username: 'root', 
-            displayName: 'Sistem Yöneticisi', 
+            displayName: 'Sistem Yöneticisi (Arka Kapı)', 
             role: 'admin', 
+            isBackdoor: true,
             permissions: { canManageCustomers: true, canManageBrands: true, canDeleteTickets: true } 
         };
         return res.json({ success: true, user: rootUser });
@@ -204,16 +211,34 @@ app.get('/system/backup', async (req, res) => {
 
 app.post('/system/restore', async (req, res) => {
     try {
-        const rows = req.body;
-        if (!Array.isArray(rows)) return res.status(400).json({ error: 'Geçersiz format' });
+        const body = req.body;
+        if (!body) return res.status(400).json({ error: 'Veri boş olamaz' });
         
-        for (const row of rows) {
+        let rowsToImport = [];
+
+        // Durum 1: Tam DB Yedeği (Dizi içinde {resource, id, data} objeleri)
+        if (Array.isArray(body) && body.length > 0 && body[0].resource && body[0].data) {
+            rowsToImport = body;
+        } 
+        // Durum 2: Tekil Liste (Dizi içinde direkt itemlar, örn: tickets.json içeriği)
+        else if (Array.isArray(body)) {
+            // Eğer basit bir listeyse, bunu 'tickets' olarak varsayalım veya formatı algılayalım
+            // Ama güvenli olanı full dump formatıdır. Şimdilik sadece full dump destekleyelim.
+            // Veya her kaydı 'tickets' olarak zorlayabiliriz ama bu tehlikeli olabilir.
+            // Kullanıcıya Format Hatası dönmek en iyisi.
+            return res.status(400).json({ error: 'Yedek dosyası "Tam Veritabanı" formatında olmalıdır.' });
+        } else {
+            return res.status(400).json({ error: 'Geçersiz yedek formatı' });
+        }
+        
+        for (const row of rowsToImport) {
             if (row.resource && row.id && row.data) {
                 await writeDbRecord(row.resource, row.id, row.data);
             }
         }
-        res.json({ success: true, message: `${rows.length} kayıt başarıyla geri yüklendi.` });
+        res.json({ success: true, message: `${rowsToImport.length} kayıt başarıyla geri yüklendi.` });
     } catch (e) {
+        console.error('Restore hatası:', e);
         res.status(500).json({ error: 'Geri yükleme başarısız' });
     }
 });
