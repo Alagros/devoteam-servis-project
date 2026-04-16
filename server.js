@@ -112,7 +112,7 @@ setInterval(() => {
 }, 60 * 60 * 1000);
 
 // --- DİNAMİK REST API YÖNETİMİ ---
-const resources = ['tickets', 'users', 'logs', 'photos'];
+const resources = ['tickets', 'users', 'logs', 'photos', 'settings'];
 
 resources.forEach(resource => {
     // GET: Tüm listeyi getir veya Query ile filtrele

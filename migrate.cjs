@@ -12,6 +12,18 @@ async function migrate() {
         await client.connect();
         console.log('Connected to PostgreSQL database.');
 
+        // EĞER VERİ VARSA MİGRASYONU ATLA
+        try {
+            const check = await client.query("SELECT count(*) FROM docs LIMIT 1");
+            if (parseInt(check.rows[0].count) > 0) {
+                console.log('⚠️ PostgreSQL database is NOT empty. Skipping one-time migration.');
+                return;
+            }
+        } catch (err) {
+            // Tablo yoksa devam et (CREATE TABLE aşağıda yapılacak)
+            console.log('No existing docs table. Proceeding with migration...');
+        }
+
         // CREATE TABLE for JSONB document store
         await client.query(`
             CREATE TABLE IF NOT EXISTS docs (
