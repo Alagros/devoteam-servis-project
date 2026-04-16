@@ -1715,6 +1715,7 @@ function TicketDetailView({ ticket, allTickets, onStatusChangeRequest, onBack, c
   
   const [editForm, setEditForm] = useState(ticket);
   const [photos, setPhotos] = useState([]);
+  const [historyPhotos, setHistoryPhotos] = useState({});
   const [viewPhoto, setViewPhoto] = useState(null);
 
   useEffect(() => {
@@ -1731,7 +1732,22 @@ function TicketDetailView({ ticket, allTickets, onStatusChangeRequest, onBack, c
       }
     };
     fetchPhotos();
-  }, [ticket.id]); 
+  }, [ticket.id]);
+
+  useEffect(() => {
+    const fetchHistoryPhotos = async () => {
+      const historyTickets = allTickets.filter(t => t.serialNumber === ticket.serialNumber && String(t.id) !== String(ticket.id));
+      const photosMap = {};
+      for (const t of historyTickets) {
+        try {
+          const res = await apiFetch(`${API_URL}/photos?ticketId=${t.id}`);
+          if (res.ok) photosMap[t.id] = await res.json();
+        } catch (e) {}
+      }
+      setHistoryPhotos(photosMap);
+    };
+    fetchHistoryPhotos();
+  }, [ticket.serialNumber, allTickets, ticket.id]);
 
   const historyTickets = allTickets.filter(t => t.serialNumber === ticket.serialNumber && String(t.id) !== String(ticket.id)).sort((a,b) => new Date(b.dateReceived) - new Date(a.dateReceived));
   const isAdmin = user?.role === 'admin';
@@ -2129,6 +2145,19 @@ function TicketDetailView({ ticket, allTickets, onStatusChangeRequest, onBack, c
                           <div className="text-xs font-medium text-slate-500 text-right pt-2">
                             İşlemi Yapan: <span className="text-slate-300 font-black">{hist.personnel}</span>
                           </div>
+
+                          {historyPhotos[hist.id] && historyPhotos[hist.id].length > 0 && (
+                            <div className="pt-4 border-t border-slate-800">
+                               <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-3">Geçmiş Kayıt Fotoğrafları</span>
+                               <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                                 {historyPhotos[hist.id].map(photo => (
+                                   <div key={photo.id} onClick={() => setViewPhoto(photo.url)} className="w-20 h-20 rounded-xl overflow-hidden border border-slate-700 cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0">
+                                      <img src={photo.url} className="w-full h-full object-cover" />
+                                   </div>
+                                 ))}
+                               </div>
+                            </div>
+                          )}
                         </div>
 
                       </div>
@@ -2278,6 +2307,7 @@ function CustomerStatusView() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [ticketData, setTicketData] = useState(null);
+  const [showHistory, setShowHistory] = useState(false);
   
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -2327,46 +2357,15 @@ function CustomerStatusView() {
          {ticketData && (
             <div className="bg-[#0f172a] border border-slate-800 rounded-3xl overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-8">
                <div className="p-6 border-b border-slate-800 bg-slate-900/50">
-                  <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Cihaz Bilgisi</div>
+                  <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Güncel Cihaz Durumu</div>
                   <div className="text-xl font-black text-white flex items-center gap-2"><Smartphone size={20} className="text-slate-400"/> {ticketData[0].brand} {ticketData[0].model}</div>
                   <div className="mt-4 flex gap-2 w-full justify-between items-center text-xs text-slate-400">
                     <span className="font-mono font-bold bg-slate-800 border border-slate-700 px-2.5 py-1.5 rounded-lg text-slate-300">SN: {ticketData[0].serialNumber}</span>
-                    <span className="font-bold bg-blue-900/30 text-blue-400 px-2.5 py-1.5 rounded-lg border border-blue-900/50">{ticketData.length} Kayıt Bulundu</span>
+                    <span className="font-bold bg-blue-900/30 text-blue-400 px-2.5 py-1.5 rounded-lg border border-blue-900/50">Kayıt No: {ticketData[0].id}</span>
                   </div>
                </div>
                
                <div className="p-6 space-y-8 bg-slate-950/20">
-                 {ticketData.map((t, idx) => (
-                    <div key={t.id} className="relative pb-8 border-b border-slate-800 last:border-0 last:pb-0">
-                       <div className="mb-4 flex items-center justify-between">
-                          <StatusBadge status={t.status} />
-                          <span className="text-xs font-bold text-slate-500">{formatDateTime(t.dateReceived)}</span>
-                       </div>
-                       
-                       <div className="space-y-3">
-                         <div className="text-sm text-slate-300 font-medium bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-sm relative overflow-hidden">
-                            <div className="absolute top-0 left-0 w-1 h-full bg-slate-600"></div>
-                            <span className="text-[10px] text-slate-500 uppercase font-black tracking-widest block mb-1.5 flex items-center gap-1"><AlertCircle size={12}/> Şikayetiniz</span>
-                            <div className="leading-relaxed">{t.complaint || '-'}</div>
-                         </div>
-                         
-                         {t.repairType && (
-                           <div className="text-sm text-slate-200 font-medium bg-blue-900/20 p-4 rounded-xl border border-blue-900/40 shadow-sm relative overflow-hidden">
-                              <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
-                              <span className="text-[10px] text-blue-400 uppercase font-black tracking-widest block mb-1.5 flex items-center gap-1"><Wrench size={12}/> Yapılan İşlem ({t.repairType})</span>
-                              <div className="leading-relaxed">{t.serviceNote || '-'}</div>
-                           </div>
-                         )}
-                       </div>
-                       
-                       <div className="grid grid-cols-2 gap-4 mt-5 text-xs bg-slate-900 border border-slate-800 rounded-xl p-3 shadow-inner">
-                          <div>
-                            <span className="text-slate-500 uppercase font-black block mb-1 text-[9px] tracking-widest flex items-center gap-1"><Package size={10}/> Teslim Alınma</span>
-                            <span className="text-slate-300 font-black">{formatDateTime(t.dateReceived)}</span>
-                          </div>
-                          <div className={t.dateDelivered ? "text-green-400" : "text-orange-400"}>
-                            <span className="text-slate-500 uppercase font-black block mb-1 text-[9px] tracking-widest flex items-center gap-1"><Package size={10}/> Servis Bitiş</span>
-                            <span className="font-black">{t.dateDelivered ? formatDateTime(t.dateDelivered) : 'Devam Ediyor'}</span>
                           </div>
                        </div>
                     </div>
