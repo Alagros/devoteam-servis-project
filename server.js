@@ -52,8 +52,34 @@ const initDb = async () => {
                 PRIMARY KEY (resource, id)
             );
         `);
-        console.log('✅ PostgreSQL tablo yapısı hazır.');
-    } catch (e) { console.error('❌ Tablo oluşturma hatası:', e); }
+        
+        // --- DATA MIGRATION: Eskiden kalan statü isimlerini güncelle ---
+        // Servise Gönderildi -> Servis İşlemi Başladı
+        // Servisten Döndü -> Servis İşlemi Bitti
+        await pool.query(`
+            UPDATE docs 
+            SET data = data || '{"status": "Servis İşlemi Başladı"}'::jsonb 
+            WHERE resource = 'tickets' AND data->>'status' = 'Servise Gönderildi';
+        `);
+        await pool.query(`
+            UPDATE docs 
+            SET data = data || '{"status": "Servis İşlemi Bitti"}'::jsonb 
+            WHERE resource = 'tickets' AND data->>'status' = 'Servisten Döndü';
+        `);
+        // Log kayıtlarını da güncelle
+        await pool.query(`
+            UPDATE docs 
+            SET data = data || '{"status": "Servis İşlemi Başladı"}'::jsonb 
+            WHERE resource = 'logs' AND data->>'status' = 'Servise Gönderildi';
+        `);
+        await pool.query(`
+            UPDATE docs 
+            SET data = data || '{"status": "Servis İşlemi Bitti"}'::jsonb 
+            WHERE resource = 'logs' AND data->>'status' = 'Servisten Döndü';
+        `);
+
+        console.log('✅ PostgreSQL tablo yapısı ve veri migrasyonu hazır.');
+    } catch (e) { console.error('❌ Tablo oluşturma/migrasyon hatası:', e); }
 };
 initDb();
 
@@ -156,6 +182,21 @@ resources.forEach(resource => {
             await writeDbRecord(resource, newItem.id, newItem);
             console.log(`✅ Yeni kayıt eklendi: ${resource}/${newItem.id}`);
             res.status(201).json(newItem);
+
+            // ARKAPLAN İŞLEMLERİ (Garanti Sorgulama vb.)
+            if (resource === 'tickets' && newItem.brand === 'Lenovo' && newItem.serialNumber) {
+                (async () => {
+                   const warranty = await getLenovoWarranty(newItem.serialNumber);
+                   if (warranty) {
+                      const checkRes = await pool.query('SELECT data FROM docs WHERE resource = $1 AND id = $2', ['tickets', newItem.id]);
+                      if (checkRes.rows.length > 0) {
+                         const updatedTicket = { ...checkRes.rows[0].data, warrantyInfo: warranty };
+                         await writeDbRecord('tickets', newItem.id, updatedTicket);
+                         console.log(`📡 Arkaplan: ${newItem.serialNumber} için garanti bilgisi güncellendi.`);
+                      }
+                   }
+                })();
+            }
         } catch (e) {
             console.error(`❌ POST /${resource} Hatası:`, e);
             res.status(500).json({ error: "Veritabanına yazılırken bir hata oluştu: " + e.message });
@@ -272,6 +313,64 @@ app.post('/system/restore', async (req, res) => {
     } catch (e) {
         console.error('Restore hatası:', e);
         res.status(500).json({ error: 'Geri yükleme başarısız' });
+    }
+});
+
+// --- LENOVO GARANTİ SORGULAMA FONKSİYONU ---
+const getLenovoWarranty = async (serial) => {
+    try {
+        const productRes = await fetch(`https://pcsupport.lenovo.com/us/en/api/v4/mse/getproducts?productId=${serial.toUpperCase()}`);
+        const productData = await productRes.json();
+        if (!productData || !productData.length || !productData[0].Id) return null;
+        
+        const product = productData[0];
+        const idParts = product.Id.split('/');
+        const machineType = idParts.length >= 2 ? idParts[idParts.length - 3] : '';
+
+        const warrantyRes = await fetch('https://pcsupport.lenovo.com/us/en/api/v4/upsell/redport/getIbaseInfo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ serialNumber: serial.toUpperCase(), machineType, country: 'TR', language: 'tr' })
+        });
+        const warrantyData = await warrantyRes.json();
+        if (warrantyData.code !== 0 || !warrantyData.data) return null;
+
+        const d = warrantyData.data;
+        const current = d.currentWarranty;
+        const machine = d.machineInfo;
+
+        return {
+            productName: machine?.productName || product.Name,
+            serial: serial.toUpperCase(),
+            machineType: machine?.type || machineType,
+            warrantyStatus: d.warrantyStatus,
+            isInWarranty: !d.oow,
+            startDate: current?.startDate || null,
+            endDate: current?.endDate || null,
+            remainingDays: current?.remainingDays ?? 0,
+            warrantyName: current?.name || null,
+            deliveryType: current?.deliveryTypeName || null,
+            description: current?.description || null,
+            baseWarranties: (d.baseWarranties || []).map(w => ({
+                name: w.name, startDate: w.startDate, endDate: w.endDate, remainingDays: w.remainingDays, deliveryType: w.deliveryTypeName, category: w.category
+            })),
+            upgradedWarranties: (d.upgradedWarranties || []).map(w => ({
+                name: w.name, startDate: w.startDate, endDate: w.endDate, remainingDays: w.remainingDays, deliveryType: w.deliveryTypeName, category: w.category
+            })),
+            checkedAt: new Date().toISOString()
+        };
+    } catch (e) {
+        console.error('getLenovoWarranty error:', e);
+        return null;
+    }
+};
+
+app.get('/warranty/lenovo/:serial', async (req, res) => {
+    const warranty = await getLenovoWarranty(req.params.serial);
+    if (warranty) {
+        res.json({ success: true, warranty });
+    } else {
+        res.json({ success: false, error: 'Garanti bilgisi alınamadı veya ürün bulunamadı.' });
     }
 });
 

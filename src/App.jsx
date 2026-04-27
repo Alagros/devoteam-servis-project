@@ -3,13 +3,19 @@ import {
   Camera, Search, CheckCircle, Truck, Package, History, LogOut, 
   Users, Plus, ArrowRight, Smartphone, Wrench, X, ChevronRight,
   CheckSquare, ClipboardCheck, AlertCircle, Settings as SettingsIcon, Trash2,
-  Clock, ChevronDown, ChevronUp, Info, WifiOff, Shield, Key, Edit, Undo2, Save, RefreshCw, Download, ImagePlus, Upload
+  Clock, ChevronDown, ChevronUp, Info, WifiOff, Shield, Key, Edit, Undo2, Save, RefreshCw, Download, ImagePlus, Upload, Battery, Lock, Globe, MessageCircle, Send
 } from 'lucide-react';
 
 // --- SUNUCU (API) AYARLARI ---
 const isProductionDomain = window.location.hostname.includes('.devoteam.net.tr');
 const API_URL = isProductionDomain ? `https://api.devoteam.net.tr` : `${window.location.protocol}//${window.location.hostname}:4001`;
 const API_KEY = 'devoteam_secure_api_key_2026';
+const STATUS_LABELS = {
+  RECEIVED: 'Müşteriden Alındı',
+  SENT: 'Servis İşlemi Başladı',
+  RETURNED: 'Servis Tamamlandı (Teslim Hazır)',
+  DELIVERED: 'Müşteriye Teslim Edildi'
+};
 
 const apiFetch = (url, options = {}) => {
   const headers = {
@@ -20,6 +26,17 @@ const apiFetch = (url, options = {}) => {
 };
 
 // --- YARDIMCI FONKSİYONLAR ---
+const calculateRemainingDays = (endDate) => {
+  if (!endDate) return 0;
+  const end = new Date(endDate);
+  const now = new Date();
+  // Saati sıfırlayarak sadece gün farkını alalım
+  end.setHours(0,0,0,0);
+  now.setHours(0,0,0,0);
+  const diff = end - now;
+  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+};
+
 function formatDuration(startDate, endDate) {
   if (!startDate || !endDate) return '-';
   const start = new Date(startDate);
@@ -39,6 +56,15 @@ function formatDuration(startDate, endDate) {
   if (mins > 0 || res.length === 0) res.push(`${mins}dk`);
   
   return res.join(' ');
+}
+
+function calculateDaysDiff(startDate) {
+  if (!startDate) return 0;
+  const start = new Date(startDate);
+  const now = new Date();
+  const diffMs = now - start;
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  return days > 0 ? days : 0;
 }
 
 function formatDateTime(dateStr) {
@@ -423,7 +449,8 @@ export default function App() {
 
   const addTickets = (newTicketsArray, isDirectToService = false) => {
     const now = new Date().toISOString();
-    const targetStatus = isDirectToService ? 'Servise Gönderildi' : 'Müşteriden Alındı';
+    const targetStatus = isDirectToService ? STATUS_LABELS.SENT : STATUS_LABELS.RECEIVED;
+
     
     newTicketsArray.forEach(async (ticket) => {
       const ticketId = `TKT-${Math.floor(10000 + Math.random() * 90000)}`;
@@ -451,7 +478,7 @@ export default function App() {
       const match = returnsArray.find(r => String(r.id) === String(t.id));
       if (match) {
         const updated = { ...t, status: targetStatus, repairType: match.repairType, serviceNote: match.serviceNote, lastPersonnel: user.displayName };
-        if (targetStatus === 'Servisten Döndü') { updated.dateReturned = now; updated.personnelReturned = user.displayName; } 
+        if (targetStatus === STATUS_LABELS.RETURNED) { updated.dateReturned = now; updated.personnelReturned = user.displayName; } 
         else if (targetStatus === 'Müşteriye Teslim Edildi') {
           if (!updated.dateReturned) { updated.dateReturned = now; updated.personnelReturned = user.displayName; }
           updated.dateDelivered = now; updated.personnelDelivered = user.displayName;
@@ -467,8 +494,14 @@ export default function App() {
   };
 
   const handleStatusChangeRequest = (targetStatus, itemIds) => {
-    if (targetStatus === 'Servisten Döndü' || targetStatus === 'Müşteriye Teslim Edildi') {
+    if (targetStatus === STATUS_LABELS.RETURNED) {
       setActionModal({ isOpen: true, targetStatus, itemIds });
+    } else if (targetStatus === STATUS_LABELS.DELIVERED) {
+      setConfirmDialog({
+        isOpen: true,
+        message: `${itemIds.length} adet cihaz '${targetStatus}' durumuna alınacak. Teslimatı onaylıyor musunuz?`,
+        onConfirm: () => { applyStatusUpdate(itemIds, targetStatus, {}); setConfirmDialog({ isOpen: false, message: '', onConfirm: null }); }
+      });
     } else {
       setConfirmDialog({
         isOpen: true,
@@ -484,9 +517,9 @@ export default function App() {
       if (itemIds.includes(String(t.id))) {
         const extra = extraDataPerId[t.id] || {};
         const updated = { ...t, status: newStatus, ...extra, lastPersonnel: user.displayName };
-        if (newStatus === 'Servise Gönderildi' && !t.dateSent) { updated.dateSent = now; updated.personnelSent = user.displayName; }
-        if (newStatus === 'Servisten Döndü' && !t.dateReturned) { updated.dateReturned = now; updated.personnelReturned = user.displayName; }
-        if (newStatus === 'Müşteriye Teslim Edildi' && !t.dateDelivered) { updated.dateDelivered = now; updated.personnelDelivered = user.displayName; }
+        if (newStatus === STATUS_LABELS.SENT && !t.dateSent) { updated.dateSent = now; updated.personnelSent = user.displayName; }
+        if (newStatus === STATUS_LABELS.RETURNED && !t.dateReturned) { updated.dateReturned = now; updated.personnelReturned = user.displayName; }
+        if (newStatus === STATUS_LABELS.DELIVERED && !t.dateDelivered) { updated.dateDelivered = now; updated.personnelDelivered = user.displayName; }
         updateTicketInDb(t.id, updated);
         saveLogToDb({ ticketId: t.id, status: newStatus, personnel: user.displayName, timestamp: now, repairType: extra.repairType || null, serviceNote: extra.serviceNote || null });
         return updated;
@@ -592,7 +625,7 @@ export default function App() {
           
           <main className={`p-4 md:p-8 max-w-6xl mx-auto ${serverError ? 'pt-10' : ''}`}>
             {currentView === 'dashboard' && <DashboardView tickets={tickets} onNavigate={handleNavigate} />}
-            {currentView === 'settings' && <SettingsView customers={customers} setCustomers={handleUpdateCustomers} brandsModels={brandsModels} setBrandsModels={handleUpdateBrands} currentUser={user} showToast={showToast} rootBackdoorEnabled={rootBackdoorEnabled} onToggleRootBackdoor={async (val) => {
+            {currentView === 'settings' && <SettingsView customers={customers} setCustomers={handleUpdateCustomers} brandsModels={brandsModels} setBrandsModels={handleUpdateBrands} currentUser={user} showToast={showToast} tickets={tickets} onUpdateTicket={handleUpdateTicket} rootBackdoorEnabled={rootBackdoorEnabled} onToggleRootBackdoor={async (val) => {
                const res = await apiFetch(`${API_URL}/settings/global`);
                const current = await res.json();
                await apiFetch(`${API_URL}/settings/global`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...current, rootBackdoorEnabled: val }) });
@@ -636,11 +669,62 @@ export default function App() {
 }
 
 // --- SUB-COMPONENTS ---
-function SettingsView({ customers, setCustomers, brandsModels, setBrandsModels, currentUser, showToast, rootBackdoorEnabled, onToggleRootBackdoor }) {
+function SettingsView({ customers, setCustomers, brandsModels, setBrandsModels, currentUser, showToast, tickets, onUpdateTicket, rootBackdoorEnabled, onToggleRootBackdoor }) {
   const [newCustomer, setNewCustomer] = useState('');
   const [newBrand, setNewBrand] = useState('');
   const [newModel, setNewModel] = useState('');
   const [selectedBrand, setSelectedBrand] = useState(Object.keys(brandsModels)[0] || '');
+
+  const [isBulkWarrantyChecking, setIsBulkWarrantyChecking] = useState(false);
+  const [bulkWarrantyStatus, setBulkWarrantyStatus] = useState({ total: 0, checked: 0, found: 0 });
+  const [notFoundSerials, setNotFoundSerials] = useState([]);
+
+  const handleBulkWarrantyCheck = async (forceAll = false) => {
+    let lenovoTickets = (tickets || []).filter(t => t.brand && t.brand.toLowerCase() === 'lenovo');
+    if (!forceAll) {
+      lenovoTickets = lenovoTickets.filter(t => !t.warrantyInfo || !t.warrantyInfo.checkedAt);
+    }
+
+    if(lenovoTickets.length === 0) {
+      showToast(forceAll ? 'Sistemde hiç Lenovo cihaz bulunamadı!' : 'Kontrol edilecek (garantisi çekilmemiş) Lenovo cihaz bulunamadı!', 'info');
+      return;
+    }
+    
+    if(!window.confirm(`${lenovoTickets.length} adet Lenovo cihaz için garanti durumu sorgulanacak. Devam edilsin mi?`)) return;
+    
+    setIsBulkWarrantyChecking(true);
+    setBulkWarrantyStatus({ total: lenovoTickets.length, checked: 0, found: 0 });
+    setNotFoundSerials([]);
+    
+    let checkedCount = 0;
+    let foundCount = 0;
+    const missing = [];
+    
+    for (const ticket of lenovoTickets) {
+      try {
+          const res = await apiFetch(`${API_URL}/warranty/lenovo/${ticket.serialNumber}`);
+          if (res.ok) {
+              const data = await res.json();
+              if (data.success && data.warranty?.isInWarranty !== undefined) {
+                  foundCount++;
+                  if(onUpdateTicket) onUpdateTicket(ticket.id, { warrantyInfo: data.warranty });
+              } else {
+                  missing.push(ticket.serialNumber);
+              }
+          } else {
+            missing.push(ticket.serialNumber);
+          }
+      } catch(e) {
+          missing.push(ticket.serialNumber);
+      }
+      checkedCount++;
+      setBulkWarrantyStatus({ total: lenovoTickets.length, checked: checkedCount, found: foundCount });
+    }
+    
+    setNotFoundSerials(missing);
+    setIsBulkWarrantyChecking(false);
+    showToast(`Sorgulama tamamlandı. ${foundCount} cihaz bulundu.`);
+  };
 
   const isAdmin = currentUser?.role === 'admin';
   const canManageCustomers = isAdmin || currentUser?.permissions?.canManageCustomers;
@@ -906,6 +990,37 @@ function SettingsView({ customers, setCustomers, brandsModels, setBrandsModels, 
         <div className="bg-slate-900 rounded-2xl shadow-sm border border-slate-800 p-5 md:p-6 mt-6">
           <h3 className="text-sm font-bold text-slate-400 mb-4 uppercase tracking-widest border-b border-slate-800 pb-3 flex items-center gap-2"><SettingsIcon size={18}/> Sistem Veri Yönetimi</h3>
           
+          <div className="bg-[#0f172a] p-5 rounded-2xl border border-slate-800 mb-4 flex flex-col md:flex-row justify-between gap-4 relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-1.5 h-full bg-green-500 transition-all group-hover:w-2"></div>
+            <div className="flex-1">
+               <div className="font-bold text-white mb-1 flex items-center gap-2">Toplu Garanti Sorgulama <span className="text-[10px] bg-green-900/50 text-green-400 px-2 py-0.5 rounded-full">Lenovo</span></div>
+               <div className="text-xs text-slate-400 mb-3">Sistemdeki cihazların garantisini otomatik sorgular ve eksik olanları kaydeder.</div>
+               
+               {isBulkWarrantyChecking && (
+                 <div className="space-y-2 mt-2 mr-4">
+                   <div className="flex justify-between text-xs font-bold text-slate-400">
+                     <span>İşleniyor: {bulkWarrantyStatus.checked} / {bulkWarrantyStatus.total}</span>
+                     <span className="text-green-400">Bulunan: {bulkWarrantyStatus.found}</span>
+                   </div>
+                   <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                     <div className="bg-green-500 h-1.5 rounded-full transition-all duration-300" style={{ width: `${(bulkWarrantyStatus.checked / (bulkWarrantyStatus.total || 1)) * 100}%` }}></div>
+                   </div>
+                 </div>
+               )}
+
+               {!isBulkWarrantyChecking && notFoundSerials.length > 0 && (
+                 <div className="mt-3 p-3 bg-red-900/10 border border-red-900/30 rounded-lg mr-4">
+                   <p className="text-[10px] text-red-400 font-bold mb-1 uppercase tracking-wider">Bulunamayan Seri Numaraları:</p>
+                   <p className="text-[11px] font-mono text-slate-400 break-all">{notFoundSerials.join(', ')}</p>
+                 </div>
+               )}
+            </div>
+            <div className="flex flex-col sm:flex-row items-center md:items-start gap-2">
+              <button onClick={() => handleBulkWarrantyCheck(false)} disabled={isBulkWarrantyChecking} title="Sadece garantisi henüz sorgulanmamış olan cihazları kontrol eder" className="w-full sm:w-auto bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50 whitespace-nowrap"><RefreshCw size={14} className={isBulkWarrantyChecking ? "animate-spin" : ""} /> Yenileri Kontrol Et</button>
+              <button onClick={() => handleBulkWarrantyCheck(true)} disabled={isBulkWarrantyChecking} title="Sistemdeki tüm Lenovo cihazların garantisini en baştan çekerek günceller" className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50 whitespace-nowrap"><RefreshCw size={14} className={isBulkWarrantyChecking ? "animate-spin" : ""} /> Tümünü Tekrar Kontrol Et</button>
+            </div>
+          </div>
+
           <div className="bg-[#0f172a] p-5 rounded-2xl border border-slate-800 mb-4 flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden group">
             <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-600 transition-all group-hover:w-2"></div>
             <div>
@@ -1051,7 +1166,7 @@ function ActionModal({ targetStatus, itemIds, tickets, onClose, onSubmit }) {
     <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[150] flex items-end md:items-center justify-center">
       <div className="bg-slate-900 w-full max-w-2xl md:rounded-3xl rounded-t-3xl max-h-[90vh] flex flex-col shadow-2xl animate-in slide-in-from-bottom-8 md:slide-in-from-bottom-0 md:zoom-in-95 border border-transparent border-slate-800">
         <div className="flex justify-between items-center p-5 border-b border-slate-800 bg-slate-950 md:rounded-t-3xl rounded-t-3xl">
-          <div><h3 className="font-black text-xl text-white">{targetStatus === 'Müşteriye Teslim Edildi' ? 'Müşteriye Teslim Etme' : 'Servisten Teslim Alma'}</h3><p className="text-xs text-slate-400 font-medium mt-1">{items.length} adet cihaz işaretlenecek.</p></div>
+          <div><h3 className="font-black text-xl text-white">{targetStatus === STATUS_LABELS.RETURNED ? 'Servisten Teslim Alma' : 'Durum Güncelleme'}</h3><p className="text-xs text-slate-400 font-medium mt-1">{items.length} adet cihaz işaretlenecek.</p></div>
           <button onClick={onClose} className="p-2 bg-slate-900 rounded-full text-slate-500 hover:bg-slate-800 border border-slate-700 shadow-sm"><X size={20} /></button>
         </div>
         <div className="p-4 overflow-y-auto flex-1 space-y-4 bg-slate-950/50">
@@ -1251,10 +1366,17 @@ function TicketListView({ tickets, onNavigate, isBulkMode, setIsBulkMode, select
   const handleExport = (selectedStatuses) => {
     const itemsToExport = tickets.filter(t => selectedStatuses.includes(t.status));
     if (itemsToExport.length === 0) { showToast('Dışa aktarılacak cihaz bulunamadı.', 'error'); return; }
-    const headers = ['Kayıt ID', 'Seri No', 'Müşteri', 'Marka', 'Model', 'Durum', 'Kabul Tarihi', 'Teslim Tarihi', 'Şikayet', 'Onarım Tipi', 'Servis Notu', 'Son İşlem Yapan'];
+    const headers = ['Kayıt ID', 'Seri No', 'Müşteri', 'Marka', 'Model', 'Durum', 'Kabul Tarihi', 'Teslim Tarihi', 'Şikayet', 'Onarım Tipi', 'Servis Notu', 'Garanti Bitiş', 'Pil Garanti Bitiş', 'Son İşlem Yapan'];
     const csvRows = [headers.join(',')];
     itemsToExport.forEach(t => {
-      csvRows.push([t.id, t.serialNumber, `"${t.customer}"`, `"${t.brand}"`, `"${t.model}"`, `"${t.status}"`, t.dateReceived ? `"${formatDateTime(t.dateReceived)}"` : '', t.dateDelivered ? `"${formatDateTime(t.dateDelivered)}"` : '', `"${(t.complaint || '').replace(/"/g, '""')}"`, `"${t.repairType || ''}"`, `"${(t.serviceNote || '').replace(/"/g, '""')}"`, `"${t.lastPersonnel || t.personnel || ''}"`].join(','));
+      let wEnd = '', bEnd = '';
+      if(t.warrantyInfo) {
+          wEnd = t.warrantyInfo.endDate ? formatDateTime(t.warrantyInfo.endDate).split(' ')[0] : '';
+          const allW = [...(t.warrantyInfo.upgradedWarranties || []), ...(t.warrantyInfo.baseWarranties || [])];
+          const bW = allW.find(w => w.category === 'Battery' || (w.name && w.name.toLowerCase().includes('battery')));
+          if(bW) bEnd = bW.endDate ? formatDateTime(bW.endDate).split(' ')[0] : '';
+      }
+      csvRows.push([t.id, t.serialNumber, `"${t.customer}"`, `"${t.brand}"`, `"${t.model}"`, `"${t.status}"`, t.dateReceived ? `"${formatDateTime(t.dateReceived)}"` : '', t.dateDelivered ? `"${formatDateTime(t.dateDelivered)}"` : '', `"${(t.complaint || '').replace(/"/g, '""')}"`, `"${t.repairType || ''}"`, `"${(t.serviceNote || '').replace(/"/g, '""')}"`, `"${wEnd}"`, `"${bEnd}"`, `"${t.lastPersonnel || t.personnel || ''}"`].join(','));
     });
     const blob = new Blob(["\uFEFF" + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -1311,11 +1433,22 @@ function TicketListView({ tickets, onNavigate, isBulkMode, setIsBulkMode, select
             <tbody className="divide-y divide-slate-800">
               {filteredTickets.map(ticket => {
                 const historyCount = tickets.filter(t => t.serialNumber === ticket.serialNumber).length;
+                let wStr = null;
+                let bStr = null;
+                if(ticket.warrantyInfo) {
+                   wStr = ticket.warrantyInfo.isInWarranty ? `Garantili (${ticket.warrantyInfo.remainingDays}G)` : 'Gar. Dışı';
+                   const allW = [...(ticket.warrantyInfo.upgradedWarranties || []), ...(ticket.warrantyInfo.baseWarranties || [])];
+                   const bW = allW.find(w => w.category === 'Battery' || (w.name && w.name.toLowerCase().includes('battery')));
+                   if(bW && bW.remainingDays > 0) bStr = `Pil (${bW.remainingDays}G)`;
+                }
                 return (
                   <tr key={ticket.id} className={`hover:bg-slate-800/50 transition-colors ${selectedForBulk.includes(String(ticket.id)) ? 'bg-blue-900/20' : ''}`}>
                     {isBulkMode && <td className="px-5 py-4"><input type="checkbox" className="w-5 h-5 cursor-pointer" checked={selectedForBulk.includes(String(ticket.id))} onChange={() => toggleSelection(String(ticket.id))} /></td>}
                     <td className="px-5 py-4"><div className="font-bold text-white text-base">{ticket.customer}</div><div className="text-xs text-slate-400 font-medium mt-0.5">{ticket.brand} {ticket.model}</div></td>
-                    <td className="px-5 py-4"><div className="flex items-center gap-2 font-mono text-slate-300 font-medium">{ticket.serialNumber}{historyCount > 1 && <span className="bg-red-900/30 text-red-400 border border-red-800 text-[10px] px-1.5 py-0.5 rounded-md font-black" title={`Toplam ${historyCount} kez geldi.`}>{historyCount} Kayıt</span>}</div></td>
+                    <td className="px-5 py-4"><div className="flex flex-col items-start gap-1 font-mono text-slate-300 font-medium">
+                      <div className="flex items-center gap-2">{ticket.serialNumber}{historyCount > 1 && <span className="bg-red-900/30 text-red-400 border border-red-800 text-[10px] px-1.5 py-0.5 rounded-md font-black" title={`Toplam ${historyCount} kez geldi.`}>{historyCount} Kayıt</span>}</div>
+                      {wStr && <div className="flex gap-1 mt-1"><span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${ticket.warrantyInfo.isInWarranty ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}`}>{wStr}</span>{bStr && <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-900/30 text-emerald-400">{bStr}</span>}</div>}
+                    </div></td>
                     <td className="px-5 py-4"><div className="flex flex-col items-start gap-2"><StatusBadge status={ticket.status} /><div className={`text-[11px] flex items-center gap-1 font-bold px-2 py-1 rounded-lg ${ticket.status === 'Müşteriye Teslim Edildi' ? 'bg-slate-800 text-slate-400' : 'bg-orange-900/30 text-orange-400 border border-orange-800'}`}><Clock size={12} className={ticket.status !== 'Müşteriye Teslim Edildi' ? "animate-pulse" : ""}/> {ticket.status === 'Müşteriye Teslim Edildi' ? 'Biten: ' : 'Devam: '} {ticket.status === 'Müşteriye Teslim Edildi' ? formatDuration(ticket.dateReceived, ticket.dateDelivered) : formatDuration(ticket.dateReceived, currentTime.toISOString())}</div></div></td>
                     <td className="px-5 py-4">
                       <div className="text-slate-300 font-medium mb-1">{formatDateTime(ticket.dateReceived)}</div>
@@ -1336,15 +1469,25 @@ function TicketListView({ tickets, onNavigate, isBulkMode, setIsBulkMode, select
         <div className="md:hidden divide-y divide-slate-800">
           {filteredTickets.map(ticket => {
             const historyCount = tickets.filter(t => t.serialNumber === ticket.serialNumber).length;
+            let wStr = null;
+            let bStr = null;
+            if(ticket.warrantyInfo) {
+               wStr = ticket.warrantyInfo.isInWarranty ? `Garantili (${ticket.warrantyInfo.remainingDays}G)` : 'Gar. Dışı';
+               const allW = [...(ticket.warrantyInfo.upgradedWarranties || []), ...(ticket.warrantyInfo.baseWarranties || [])];
+               const bW = allW.find(w => w.category === 'Battery' || (w.name && w.name.toLowerCase().includes('battery')));
+               if(bW && bW.remainingDays > 0) bStr = `Pil (${bW.remainingDays}G)`;
+            }
             return (
               <div key={ticket.id} onClick={() => isBulkMode ? toggleSelection(String(ticket.id)) : onNavigate('detail', String(ticket.id))} className={`p-5 flex gap-4 cursor-pointer transition-colors ${selectedForBulk.includes(String(ticket.id)) ? 'bg-blue-900/20' : 'hover:bg-slate-800/50'}`}>
                 {isBulkMode && <div className="flex items-center justify-center pt-2"><div className={`w-7 h-7 rounded-xl border-2 flex items-center justify-center shadow-sm ${selectedForBulk.includes(String(ticket.id)) ? 'bg-blue-600 border-blue-600' : 'bg-slate-800 border-slate-600'}`}>{selectedForBulk.includes(String(ticket.id)) && <CheckSquare size={18} className="text-white" />}</div></div>}
                 <div className="flex-1">
                   <div className="flex justify-between items-start mb-2"><div className="font-black text-white text-[16px]">{ticket.customer}</div><span className="text-[10px] font-mono bg-slate-800 px-2 py-1 rounded-md text-slate-400 font-bold">{ticket.id}</span></div>
-                  <div className="text-[13px] text-slate-300 mb-3 font-medium flex items-center flex-wrap gap-1.5">{ticket.brand} {ticket.model} <span className="text-slate-500 font-mono">({ticket.serialNumber})</span>{historyCount > 1 && <span className="bg-red-900/30 text-red-400 border border-red-800 text-[9px] px-1.5 py-0.5 rounded-md font-black">{historyCount} Kayıt</span>}</div>
+                  <div className="text-[13px] text-slate-300 mb-3 font-medium flex items-center flex-wrap gap-1.5">{ticket.brand} {ticket.model} <span className="text-slate-500 font-mono">({ticket.serialNumber})</span>{historyCount > 1 && <span className="bg-red-900/30 text-red-400 border border-red-800 text-[9px] px-1.5 py-0.5 rounded-md font-black">{historyCount} Kayıt</span>}
+                  {wStr && <div className="flex gap-1 ml-1"><span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${ticket.warrantyInfo.isInWarranty ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}`}>{wStr}</span>{bStr && <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-900/30 text-emerald-400">{bStr}</span>}</div>}
+                  </div>
                   <div className="flex justify-between items-end mt-2">
                     <div className="flex flex-col gap-2 items-start">
-                      <StatusBadge status={ticket.status} />
+                      <StatusBadge status={ticket.status} repairType={ticket.repairType} />
                       <div className={`text-[10px] flex items-center gap-1 font-bold px-2 py-1 rounded-lg ${ticket.status === 'Müşteriye Teslim Edildi' ? 'bg-slate-800 text-slate-400' : 'bg-orange-900/30 text-orange-400 border border-orange-800'}`}>
                         <Clock size={12} className={ticket.status !== 'Müşteriye Teslim Edildi' ? "animate-pulse" : ""}/> {ticket.status === 'Müşteriye Teslim Edildi' ? formatDuration(ticket.dateReceived, ticket.dateDelivered) : formatDuration(ticket.dateReceived, currentTime.toISOString())}
                       </div>
@@ -1698,10 +1841,138 @@ function FastReturnView({ availableTickets, onSave, onCancel, customers, showToa
               )}
             </div>
             <div className="p-4 sm:p-5 border-t border-slate-800 bg-slate-900 grid grid-cols-2 gap-3 rounded-b-3xl">
-              <button type="button" onClick={() => handleSubmit('Servisten Döndü')} disabled={pendingReturns.length === 0} className="w-full px-2 sm:px-6 py-4 rounded-xl sm:rounded-2xl bg-slate-600 text-white font-bold flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm text-center leading-snug"><CheckCircle size={20} className="sm:hidden" /><span className="hidden sm:inline"><CheckCircle size={20} /></span>Servisten Al</button>
-              <button type="button" onClick={() => handleSubmit('Müşteriye Teslim Edildi')} disabled={pendingReturns.length === 0} className="w-full px-2 sm:px-6 py-4 rounded-xl sm:rounded-2xl bg-green-600 text-white font-bold flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm text-center leading-snug"><Users size={20} className="sm:hidden" /><span className="hidden sm:inline"><Users size={20} /></span>Direkt Teslim Et</button>
+              <button type="button" onClick={() => handleSubmit(STATUS_LABELS.RETURNED)} disabled={pendingReturns.length === 0} className="w-full px-2 sm:px-6 py-4 rounded-xl sm:rounded-2xl bg-slate-600 text-white font-bold flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm text-center leading-snug"><CheckCircle size={20} className="sm:hidden" /><span className="hidden sm:inline"><CheckCircle size={20} /></span>Servisten Al</button>
+              <button type="button" onClick={() => handleSubmit(STATUS_LABELS.DELIVERED)} disabled={pendingReturns.length === 0} className="w-full px-2 sm:px-6 py-4 rounded-xl sm:rounded-2xl bg-green-600 text-white font-bold flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm text-center leading-snug"><Users size={20} className="sm:hidden" /><span className="hidden sm:inline"><Users size={20} /></span>Direkt Teslim Et</button>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- TEKLİF / MALİYET MODALI ---
+function QuoteModal({ ticket, onSave, onClose }) {
+  const getCurrentDateTimeLocal = () => new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0,16);
+
+  const [form, setForm] = useState({
+    techQuoteReceived: ticket.techQuoteReceived || false,
+    techQuoteDate: ticket.techQuoteDate ? new Date(new Date(ticket.techQuoteDate).getTime() - new Date(ticket.techQuoteDate).getTimezoneOffset() * 60000).toISOString().slice(0,16) : getCurrentDateTimeLocal(),
+    techQuoteAmount: ticket.techQuoteAmount || 0,
+    customerQuoteGiven: ticket.customerQuoteGiven || false,
+    customerQuoteDate: ticket.customerQuoteDate ? new Date(new Date(ticket.customerQuoteDate).getTime() - new Date(ticket.customerQuoteDate).getTimezoneOffset() * 60000).toISOString().slice(0,16) : getCurrentDateTimeLocal(),
+    customerQuoteAmount: ticket.customerQuoteAmount || 0,
+    customerQuoteAccepted: ticket.customerQuoteAccepted || 'Bekleniyor',
+    marginPercent: ticket.marginPercent || 0,
+    techQuoteNote: ticket.techQuoteNote || '',
+    customerQuoteNote: ticket.customerQuoteNote || '',
+  });
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    const val = type === 'checkbox' ? checked : (type === 'number' ? (parseFloat(value) || 0) : value);
+    const newForm = { ...form, [name]: val };
+
+    // Otomatik fiyat hesaplama
+    if (name === 'techQuoteAmount' || name === 'marginPercent') {
+      const margin = name === 'marginPercent' ? val : form.marginPercent;
+      const techAmt = name === 'techQuoteAmount' ? val : form.techQuoteAmount;
+      if (margin > 0) {
+        newForm.customerQuoteAmount = Math.round(techAmt * (1 + margin / 100));
+      }
+    }
+    setForm(newForm);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-slate-950/80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm" onClick={onClose}>
+      <div className="bg-slate-900 rounded-3xl border border-slate-700 shadow-2xl w-full max-w-lg p-6 md:p-8 animate-in fade-in zoom-in-95" onClick={e => e.stopPropagation()}>
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-lg font-black text-white flex items-center gap-2"><Download size={20} className="text-green-400"/> Teklif & Maliyet Yönetimi</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-white p-2 hover:bg-slate-800 rounded-full transition-colors"><X size={20}/></button>
+        </div>
+
+        {/* Teknik Servis Maliyeti */}
+        <div className="bg-slate-800/50 p-4 rounded-2xl border border-slate-700 space-y-3 mb-4">
+          <div className="flex items-center gap-3">
+            <input type="checkbox" name="techQuoteReceived" checked={form.techQuoteReceived} onChange={handleChange} className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-blue-600 focus:ring-blue-500" />
+            <label className="text-sm font-bold text-slate-200">Teknik Servisten Teklif Geldi</label>
+          </div>
+          {form.techQuoteReceived && (
+            <div className="grid grid-cols-2 gap-3 animate-in fade-in">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 mb-1">Geliş Tarihi (Saat Dahil)</label>
+                <input type="datetime-local" name="techQuoteDate" value={form.techQuoteDate} onChange={handleChange} className="w-full px-3 py-2 rounded-xl border border-slate-600 bg-slate-800 text-white text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 mb-1">Maliyet (TL)</label>
+                <input type="number" name="techQuoteAmount" value={form.techQuoteAmount} onChange={handleChange} className="w-full px-3 py-2 rounded-xl border border-slate-600 bg-slate-800 text-white text-sm outline-none focus:ring-2 focus:ring-blue-500 font-black" />
+              </div>
+            </div>
+          )}
+          {form.techQuoteReceived && (
+            <div className="mt-3 animate-in fade-in">
+              <label className="block text-[10px] font-bold text-slate-500 mb-1">Teknik Servis Notu (İç Not)</label>
+              <textarea name="techQuoteNote" value={form.techQuoteNote} onChange={handleChange} rows="2" className="w-full px-3 py-2 rounded-xl border border-slate-600 bg-slate-800 text-slate-200 text-xs outline-none focus:ring-2 focus:ring-blue-500" placeholder="Sadece personel görebilir..."></textarea>
+            </div>
+          )}
+        </div>
+
+        {/* Müşteri Teklifi */}
+        <div className="bg-blue-900/10 p-4 rounded-2xl border border-blue-900/30 space-y-3 mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <input type="checkbox" name="customerQuoteGiven" checked={form.customerQuoteGiven} onChange={handleChange} className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-blue-600 focus:ring-blue-500" />
+              <label className="text-sm font-bold text-slate-200">Müşteriye Teklif Verildi</label>
+            </div>
+            {form.customerQuoteGiven && (
+              <div className="flex items-center gap-2">
+                <select name="customerQuoteAccepted" value={form.customerQuoteAccepted} onChange={handleChange} className={`px-3 py-1.5 rounded-lg border text-xs font-black outline-none focus:ring-2 focus:ring-blue-500 ${form.customerQuoteAccepted === 'Onaylandı' ? 'bg-green-900/30 text-green-400 border-green-700' : form.customerQuoteAccepted === 'Reddedildi' ? 'bg-red-900/30 text-red-400 border-red-700' : 'bg-slate-800 border-slate-600 text-slate-300'}`}>
+                  <option value="Bekleniyor">Cevap Bekleniyor</option>
+                  <option value="Onaylandı">Müşteri Onayladı</option>
+                  <option value="Reddedildi">Müşteri Reddetti</option>
+                </select>
+              </div>
+            )}
+          </div>
+          {form.customerQuoteGiven && (
+            <div className="space-y-3 animate-in fade-in">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 mb-1">Teklif Tarihi (Saat Dahil)</label>
+                  <input type="datetime-local" name="customerQuoteDate" value={form.customerQuoteDate} onChange={handleChange} className="w-full px-3 py-2 rounded-xl border border-slate-600 bg-slate-800 text-white text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 mb-1">Kar Payı (%)</label>
+                  <input type="number" name="marginPercent" value={form.marginPercent} onChange={handleChange} className="w-full px-3 py-2 rounded-xl border border-slate-600 bg-slate-800 text-white text-sm outline-none focus:ring-2 focus:ring-blue-500 font-black" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 mb-1">Toplam Müşteri Teklifi (TL)</label>
+                <input type="number" name="customerQuoteAmount" value={form.customerQuoteAmount} onChange={handleChange} className="w-full px-3 py-2.5 rounded-xl border border-blue-700 bg-blue-900/30 text-blue-200 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-black" />
+              </div>
+              <div className="mt-3">
+                <label className="block text-[10px] font-bold text-slate-500 mb-1">Müşteriye Verilen Teklif Notu (İç Not)</label>
+                <textarea name="customerQuoteNote" value={form.customerQuoteNote} onChange={handleChange} rows="2" className="w-full px-3 py-2 rounded-xl border border-blue-800/50 bg-blue-900/20 text-blue-200 text-xs outline-none focus:ring-2 focus:ring-blue-500" placeholder="Müşteriye iletilen detaylar / Pazarlık durumu (Sadece personel görebilir)..."></textarea>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Özet */}
+        {form.techQuoteReceived && form.customerQuoteGiven && form.techQuoteAmount > 0 && form.customerQuoteAmount > 0 && (
+          <div className="bg-green-900/10 p-4 rounded-2xl border border-green-900/30 mb-6">
+            <div className="text-[10px] font-black text-green-400 uppercase tracking-widest mb-2">KAR ÖZETİ</div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-slate-300 font-medium">Net Kar:</span>
+              <span className="text-xl font-black text-green-400">{(form.customerQuoteAmount - form.techQuoteAmount).toLocaleString('tr-TR')} TL</span>
+            </div>
+          </div>
+        )}
+
+        <div className="flex justify-end gap-3">
+          <button onClick={onClose} className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-sm transition-colors">İptal</button>
+          <button onClick={() => onSave(form)} className="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white font-black rounded-xl text-sm flex items-center gap-2 shadow-xl transition-all active:scale-95"><Save size={16}/> KAYDET</button>
         </div>
       </div>
     </div>
@@ -1711,15 +1982,63 @@ function FastReturnView({ availableTickets, onSave, onCancel, customers, showToa
 function TicketDetailView({ ticket, allTickets, onStatusChangeRequest, onBack, currentTime, user, customers, brandsModels, onUpdateTicket, onDeleteTicket, showToast }) {
   const [activeTab, setActiveTab] = useState('detay');
   const [expandedHistoryId, setExpandedHistoryId] = useState(null);
+  const [inlineEditing, setInlineEditing] = useState(null); // 'internalNote' or 'serviceNote'
+  const [inlineNoteValue, setInlineNoteValue] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   
-  const [editForm, setEditForm] = useState(ticket);
+  const [editForm, setEditForm] = useState({});
   const [photos, setPhotos] = useState([]);
   const [historyPhotos, setHistoryPhotos] = useState({});
   const [viewPhoto, setViewPhoto] = useState(null);
+  const [showQuoteModal, setShowQuoteModal] = useState(false);
+  const [warrantyInfo, setWarrantyInfo] = useState(ticket.warrantyInfo || null);
+  const [warrantyLoading, setWarrantyLoading] = useState(false);
+
+  // Garanti bilgisini otomatik çek
+  const fetchWarranty = async (force = false) => {
+    if (warrantyInfo && warrantyInfo.checkedAt && !force) return;
+    setWarrantyLoading(true);
+    try {
+      const res = await apiFetch(`${API_URL}/warranty/lenovo/${ticket.serialNumber}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setWarrantyInfo(data.warranty);
+          onUpdateTicket(ticket.id, { warrantyInfo: data.warranty });
+          if(force) showToast('Garanti durumu Lenovodan tekrar çekildi.', 'success');
+        } else if (force) {
+          showToast('Lenovo sunucusundan garanti durumu alınamadı.', 'error');
+        }
+      }
+    } catch (e) { console.error('Garanti sorgulama hatası:', e); }
+    setWarrantyLoading(false);
+  };
 
   useEffect(() => {
-    if (!isEditing) setEditForm(ticket);
+    fetchWarranty();
+  }, [ticket.serialNumber]);
+
+  useEffect(() => {
+    if (isEditing) return;
+    setEditForm({
+      customer: ticket.customer,
+      brand: ticket.brand,
+      model: ticket.model,
+      serialNumber: ticket.serialNumber,
+      complaint: ticket.complaint,
+      dateReceived: ticket.dateReceived || '',
+      dateSent: ticket.dateSent || '',
+      dateReturned: ticket.dateReturned || '',
+      dateDelivered: ticket.dateDelivered || '',
+    });
+    
+    // MIGRATION: Eğer yeni notes dizisi yoksa ama eski notlar varsa taşı
+    if (!ticket.notes && (ticket.internalNote || ticket.serviceNote)) {
+       const initialNotes = [];
+       if (ticket.internalNote) initialNotes.push({ id: Date.now() + 1, text: ticket.internalNote, type: 'internal', personnel: ticket.personnel || 'Sistem', date: ticket.dateReceived || new Date().toISOString() });
+       if (ticket.serviceNote) initialNotes.push({ id: Date.now() + 2, text: ticket.serviceNote, type: 'public', personnel: ticket.personnel || 'Sistem', date: ticket.dateReceived || new Date().toISOString() });
+       onUpdateTicket(ticket.id, { notes: initialNotes, internalNote: null, serviceNote: null });
+    }
   }, [ticket, isEditing]);
 
   useEffect(() => {
@@ -1757,10 +2076,10 @@ function TicketDetailView({ ticket, allTickets, onStatusChangeRequest, onBack, c
     return (
       <button 
         onClick={() => onStatusChangeRequest(targetStatus, [ticket.id])}
-        className={`flex flex-col items-center justify-center py-3 sm:py-5 px-2 sm:px-3 rounded-xl sm:rounded-2xl border-2 transition-all group shadow-sm hover:shadow-md hover:-translate-y-1 w-full ${bgClass} ${hoverClass}`}
+        className={`w-full h-12 ${bgClass} ${hoverClass} rounded-2xl font-black text-[13px] sm:text-sm flex items-center justify-center gap-3 transition-all active:scale-[0.98] shadow-lg border border-white/10 uppercase tracking-widest ${textClass}`}
       >
-        <div className={`mb-1 sm:mb-2 opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-transform ${textClass}`}>{icon}</div>
-        <span className={`text-[10px] sm:text-sm font-black text-center uppercase tracking-wide leading-tight ${textClass}`}>{label}</span>
+        {icon}
+        {label}
       </button>
     );
   };
@@ -1771,8 +2090,10 @@ function TicketDetailView({ ticket, allTickets, onStatusChangeRequest, onBack, c
       const firstModel = brandsModels[value] && brandsModels[value].length > 0 ? brandsModels[value][0] : '';
       setEditForm({ ...editForm, brand: value, model: firstModel });
     } else {
-      if(name === 'serialNumber') value = value.toUpperCase();
-      setEditForm({ ...editForm, [name]: value });
+      let finalValue = value;
+      if(name === 'serialNumber') finalValue = value.toUpperCase();
+      if(e.target.type === 'checkbox') finalValue = e.target.checked;
+      setEditForm({ ...editForm, [name]: finalValue });
     }
   };
 
@@ -1810,26 +2131,79 @@ function TicketDetailView({ ticket, allTickets, onStatusChangeRequest, onBack, c
 
   const handleSaveEdit = () => {
     if (!editForm.serialNumber.trim() || !editForm.customer || !editForm.brand) return;
-    onUpdateTicket(ticket.id, {
+    const updates = {
       serialNumber: editForm.serialNumber,
       customer: editForm.customer,
       brand: editForm.brand,
       model: editForm.model,
-      complaint: editForm.complaint
-    });
+      complaint: editForm.complaint,
+      internalNote: editForm.internalNote,
+      serviceNote: editForm.serviceNote,
+    };
+    // Tarih düzenleme (geçmiş adımlar)
+    if (editForm.dateReceived) updates.dateReceived = editForm.dateReceived;
+    if (ticket.dateSent && editForm.dateSent) updates.dateSent = editForm.dateSent;
+    if (ticket.dateReturned && editForm.dateReturned) updates.dateReturned = editForm.dateReturned;
+    if (ticket.dateDelivered && editForm.dateDelivered) updates.dateDelivered = editForm.dateDelivered;
+    
+    // Seri numarası değiştiyse garantiyi yeniden sorgula
+    if (editForm.serialNumber !== ticket.serialNumber) {
+      updates.warrantyInfo = null;
+      setWarrantyInfo(null);
+    }
+    onUpdateTicket(ticket.id, updates);
     setIsEditing(false);
+  };
+
+  const handleSaveQuote = (quoteData) => {
+    onUpdateTicket(ticket.id, quoteData);
+    setShowQuoteModal(false);
+    showToast('Teklif bilgileri kaydedildi.', 'success');
+  };
+
+  const [newNote, setNewNote] = useState('');
+  const [newNoteType, setNewNoteType] = useState('internal');
+  const [editingNoteId, setEditingNoteId] = useState(null);
+
+  const handleAddNote = () => {
+    if (!newNote.trim()) return;
+    const notes = ticket.notes || [];
+    const note = {
+      id: Date.now(),
+      text: newNote,
+      type: newNoteType,
+      personnel: user.displayName,
+      date: new Date().toISOString()
+    };
+    onUpdateTicket(ticket.id, { notes: [...notes, note] });
+    setNewNote('');
+    showToast('Not eklendi.', 'success');
+  };
+
+  const handleUpdateNote = (id, text) => {
+    const notes = ticket.notes.map(n => n.id === id ? { ...n, text, lastUpdate: new Date().toISOString() } : n);
+    onUpdateTicket(ticket.id, { notes });
+    setEditingNoteId(null);
+    showToast('Not güncellendi.', 'success');
+  };
+
+  const handleDeleteNote = (id) => {
+    if (!window.confirm("Bu notu silmek istediğinize emin misiniz?")) return;
+    const notes = ticket.notes.filter(n => n.id !== id);
+    onUpdateTicket(ticket.id, { notes });
+    showToast('Not silindi.', 'success');
   };
 
   const handleUndo = () => {
     if (!window.confirm("Bu cihaz için yapılan SON DURUM DEĞİŞİKLİĞİNİ geri almak istediğinize emin misiniz?")) return;
     
     let updates = {};
-    if (ticket.status === 'Müşteriye Teslim Edildi') {
-      updates = { status: 'Servisten Döndü', dateDelivered: null, personnelDelivered: null, lastPersonnel: `${user.displayName} (Geri Aldı)` };
-    } else if (ticket.status === 'Servisten Döndü') {
-      updates = { status: 'Servise Gönderildi', dateReturned: null, personnelReturned: null, repairType: null, serviceNote: null, lastPersonnel: `${user.displayName} (Geri Aldı)` };
-    } else if (ticket.status === 'Servise Gönderildi') {
-      updates = { status: 'Müşteriden Alındı', dateSent: null, personnelSent: null, lastPersonnel: `${user.displayName} (Geri Aldı)` };
+    if (ticket.status === STATUS_LABELS.DELIVERED) {
+      updates = { status: STATUS_LABELS.RETURNED, dateDelivered: null, personnelDelivered: null, lastPersonnel: `${user.displayName} (Geri Aldı)` };
+    } else if (ticket.status === STATUS_LABELS.RETURNED) {
+      updates = { status: STATUS_LABELS.SENT, dateReturned: null, personnelReturned: null, repairType: null, serviceNote: null, lastPersonnel: `${user.displayName} (Geri Aldı)` };
+    } else if (ticket.status === STATUS_LABELS.SENT) {
+      updates = { status: STATUS_LABELS.RECEIVED, dateSent: null, personnelSent: null, lastPersonnel: `${user.displayName} (Geri Aldı)` };
     } else {
       alert("Bu aşamada geri alınacak bir işlem bulunmuyor."); return;
     }
@@ -1838,12 +2212,20 @@ function TicketDetailView({ ticket, allTickets, onStatusChangeRequest, onBack, c
     showToast('Son işlem başarıyla geri alındı!', 'success');
   };
 
-  const statuses = ['Müşteriden Alındı', 'Servise Gönderildi', 'Servisten Döndü', 'Müşteriye Teslim Edildi'];
+  const statuses = [STATUS_LABELS.RECEIVED, STATUS_LABELS.SENT, STATUS_LABELS.RETURNED, STATUS_LABELS.DELIVERED];
   const currentIndex = statuses.indexOf(ticket.status);
+
+  const currentRemainingDays = calculateRemainingDays(warrantyInfo?.endDate);
+  const currentIsInWarranty = currentRemainingDays > 0;
 
   return (
     <div className="max-w-4xl mx-auto pb-8">
       
+      {/* Quote/Cost Modal */}
+      {showQuoteModal && (
+        <QuoteModal ticket={ticket} onSave={handleSaveQuote} onClose={() => setShowQuoteModal(false)} />
+      )}
+
       {/* Lightbox / Fullscreen Image Modal */}
       {viewPhoto && (
         <div className="fixed inset-0 bg-slate-900/95 z-[200] flex items-center justify-center p-4 md:p-12 backdrop-blur-sm" onClick={() => setViewPhoto(null)}>
@@ -1854,73 +2236,121 @@ function TicketDetailView({ ticket, allTickets, onStatusChangeRequest, onBack, c
         </div>
       )}
 
-      <div className="flex justify-between items-start gap-4 mb-8">
-        <div className="flex items-center gap-4">
-          <button onClick={onBack} className="p-3 bg-slate-900 shadow-md border border-slate-800 hover:bg-slate-800 rounded-full transition-all hover:-translate-x-1">
-            <ArrowRight size={24} className="rotate-180 text-slate-300" />
+      {/* ÜST BAŞLIK VE AKSİYON TOOLBARI */}
+      <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-6 mb-8">
+        <div className="flex items-start gap-4">
+          <button onClick={onBack} className="mt-1 p-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-2xl transition-all hover:scale-105 active:scale-95 border border-slate-700 shadow-lg">
+            <ArrowRight size={20} className="rotate-180" />
           </button>
-          <div>
-            <h2 className="text-2xl md:text-3xl font-black text-white flex items-center gap-3 flex-wrap">
-              {ticket.customer}
-              <StatusBadge status={ticket.status} />
-              {getWarrantyUrl(ticket.brand, ticket.serialNumber) && (
-                <a 
-                  href={getWarrantyUrl(ticket.brand, ticket.serialNumber)} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="bg-blue-600 hover:bg-blue-700 text-white text-[10px] sm:text-xs font-black px-3 py-1.5 rounded-lg shadow-md flex items-center gap-1.5 transition-all hover:scale-105"
-                >
-                  <Shield size={14} /> GARANTİ SORGULA
-                </a>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-3 mb-2">
+              <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight flex items-center gap-3">
+                {ticket.customer}
+              </h2>
+              <StatusBadge status={ticket.status} repairType={ticket.repairType} />
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-2 text-slate-400 font-bold text-xs">
+              <div className="flex items-center bg-slate-900 border border-slate-700 rounded-lg overflow-hidden shadow-sm">
+                <span className="px-2 py-1 text-[9px] bg-slate-800 text-slate-500 uppercase font-black border-r border-slate-700">SN</span>
+                <span className="px-3 py-1 font-mono text-slate-200 uppercase tracking-tight">{ticket.serialNumber}</span>
+              </div>
+              <div className="flex items-center bg-slate-900 border border-slate-700 rounded-lg overflow-hidden shadow-sm">
+                <span className="px-2 py-1 text-[9px] bg-slate-800 text-slate-500 uppercase font-black border-r border-slate-700">KAYIT</span>
+                <span className="px-3 py-1 text-slate-200 tracking-tight">{ticket.id}</span>
+              </div>
+              <div className="text-slate-500 font-medium bg-slate-800/30 px-3 py-1 rounded-lg">
+                {ticket.brand} {ticket.model}
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 mt-3">
+              {warrantyLoading ? (
+                <span className="bg-slate-800 text-slate-400 text-[10px] font-black px-3 py-1.5 rounded-lg flex items-center gap-1.5 animate-pulse"><RefreshCw size={12} className="animate-spin"/> Sorgulanıyor...</span>
+              ) : warrantyInfo ? (
+                <>
+                  <span className={`text-[10px] font-black px-3 py-1.5 rounded-lg flex items-center gap-1.5 ${currentIsInWarranty ? 'bg-green-600 text-white shadow-lg shadow-green-900/20' : 'bg-red-900/40 text-red-400 border border-red-800'}`}>
+                    <Shield size={12} /> {currentIsInWarranty ? `GARANTİLİ (${currentRemainingDays} g)` : 'GARANTİ DIŞI'}
+                  </span>
+                  {ticket.brand?.toLowerCase().includes('lenovo') && (
+                    <a 
+                      href={`https://pcsupport.lenovo.com/tr/tr/search?query=${ticket.serialNumber}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] font-black px-3 py-1.5 rounded-lg flex items-center gap-1.5 bg-blue-600/20 text-blue-400 border border-blue-500/30 hover:bg-blue-600 hover:text-white transition-all shadow-lg shadow-blue-900/20"
+                    >
+                      <Globe size={12} /> LENOVO DESTEK
+                    </a>
+                  )}
+                  <button onClick={() => fetchWarranty(true)} title="Yenile" className="text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 p-1.5 rounded-lg transition-colors border border-slate-700">
+                    <RefreshCw size={12} />
+                  </button>
+                </>
+              ) : (
+                <button onClick={() => fetchWarranty(true)} className="bg-blue-900/30 text-blue-400 border border-blue-800 hover:bg-blue-600 hover:text-white text-[10px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors">
+                  <Shield size={12}/> Garanti Sorgula
+                </button>
               )}
-            </h2>
-            <div className="text-slate-400 font-bold text-xs md:text-sm mt-1.5">{ticket.brand} {ticket.model} | SN: <span className="font-mono">{ticket.serialNumber}</span> | Kayıt: {ticket.id}</div>
+            </div>
           </div>
         </div>
         
-        <div className="flex items-center gap-2 flex-wrap justify-end">
-          {isAdmin && (
-            <button 
-              onClick={() => setIsEditing(true)} 
-              disabled={activeTab !== 'detay'}
-              className={`border px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-colors shadow-sm ${activeTab !== 'detay' ? 'bg-slate-800/50 border-slate-700 text-slate-500 cursor-not-allowed grayscale' : 'bg-blue-900/20 text-blue-400 border-blue-800 hover:bg-blue-600 hover:text-white'}`}
-            >
-              <Edit size={16} /> <span className="hidden sm:inline">Düzenle</span>
-            </button>
-          )}
-          {isAdmin && ticket.status !== 'Müşteriden Alındı' && (
-            <button onClick={handleUndo} className="bg-orange-900/20 text-orange-400 border border-orange-800 hover:bg-orange-600 hover:text-white px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-colors shadow-sm">
-              <Undo2 size={16} /> <span className="hidden sm:inline">Geri Al</span>
-            </button>
-          )}
-          {canDelete && (
-            <button onClick={() => onDeleteTicket(ticket.id)} className="bg-red-900/20 text-red-400 border border-red-800 hover:bg-red-600 hover:text-white px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-colors shadow-sm">
-              <Trash2 size={16} /> <span className="hidden sm:inline">Sil</span>
-            </button>
-          )}
+        <div className="flex flex-col gap-5 w-full xl:w-auto mt-6 xl:mt-0">
+          {/* DURUM VE AKSİYON PANELİ */}
+          <div className="bg-slate-900/50 p-3 md:p-4 rounded-[2rem] border border-slate-800 shadow-xl backdrop-blur-sm">
+            <div className="flex flex-col gap-3">
+              {/* ANA DURUM DEĞİŞTİRME BUTONU */}
+              {ticket.status !== STATUS_LABELS.DELIVERED && !isEditing && (
+                <div className="w-full">
+                  {ticket.status === STATUS_LABELS.RECEIVED && (
+                    <ActionButton targetStatus={STATUS_LABELS.SENT} label="SERVİS İŞLEMİNİ BAŞLAT" icon={<Truck size={18} />} bgClass="bg-blue-600 shadow-blue-900/20" hoverClass="hover:bg-blue-500" textClass="text-white" />
+                  )}
+                  {ticket.status === STATUS_LABELS.SENT && (
+                    <ActionButton targetStatus={STATUS_LABELS.RETURNED} label="SERVİS İŞLEMİNİ BİTİR" icon={<CheckCircle size={18} />} bgClass="bg-orange-600 shadow-orange-900/20" hoverClass="hover:bg-orange-500" textClass="text-white" />
+                  )}
+                  {ticket.status === STATUS_LABELS.RETURNED && (
+                    <ActionButton targetStatus={STATUS_LABELS.DELIVERED} label="MÜŞTERİYE TESLİM ET" icon={<Users size={18} />} bgClass="bg-green-600 shadow-green-900/20" hoverClass="hover:bg-green-500" textClass="text-white" />
+                  )}
+                </div>
+              )}
+
+              {/* ARAÇ SETİ - MOBİLDE 2x2, DESKTOPTA YAN YANA */}
+              <div className="grid grid-cols-2 md:flex md:items-center gap-2">
+                {isAdmin && (
+                  <button onClick={() => setShowQuoteModal(true)} className="h-11 px-4 bg-slate-800 text-slate-200 hover:bg-slate-700 hover:text-white rounded-2xl text-[11px] font-black flex items-center justify-center gap-2 border border-slate-700 transition-all active:scale-95">
+                    <Download size={14} className="text-blue-400" /> TEKLİF
+                  </button>
+                )}
+                {isAdmin && (
+                  <button 
+                    onClick={() => setIsEditing(true)} 
+                    disabled={activeTab !== 'detay'}
+                    className={`h-11 px-4 rounded-2xl text-[11px] font-black flex items-center justify-center gap-2 border transition-all active:scale-95 ${activeTab !== 'detay' ? 'bg-slate-900 text-slate-600 border-slate-800 cursor-not-allowed' : 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700 hover:text-white'}`}
+                  >
+                    <Edit size={14} className="text-amber-400" /> DÜZENLE
+                  </button>
+                )}
+                {isAdmin && ticket.status !== STATUS_LABELS.RECEIVED && (
+                  <button onClick={handleUndo} className="h-11 px-4 bg-slate-800 text-slate-200 hover:bg-slate-700 hover:text-white rounded-2xl text-[11px] font-black flex items-center justify-center gap-2 border border-slate-700 transition-all active:scale-95">
+                    <Undo2 size={14} className="text-orange-400" /> GERİ AL
+                  </button>
+                )}
+                {canDelete && (
+                  <button onClick={() => onDeleteTicket(ticket.id)} title="Kaydı Sil" className="h-11 px-4 bg-slate-800/50 text-slate-500 hover:bg-red-600 hover:text-white rounded-2xl flex items-center justify-center border border-slate-700 hover:border-red-600/50 transition-all active:scale-95">
+                    <Trash2 size={16} />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 
-      {ticket.status !== 'Müşteriye Teslim Edildi' && !isEditing && (
-        <div className="bg-slate-900 p-3 sm:p-5 rounded-3xl shadow-sm border border-slate-800 mb-6 flex gap-2 transition-colors">
-          {ticket.status === 'Müşteriden Alındı' && (
-            <div className="col-span-2 w-full">
-              <ActionButton targetStatus="Servise Gönderildi" label="Servise Gönder" icon={<Truck size={20} className="sm:w-6 sm:h-6" />} bgClass="bg-blue-900/20 border-blue-800" hoverClass="hover:bg-blue-600 hover:border-blue-600" textClass="text-blue-400 group-hover:text-white" />
-            </div>
-          )}
-          {ticket.status === 'Servise Gönderildi' && (
-            <>
-              <ActionButton targetStatus="Servisten Döndü" label="Servisten Al" icon={<CheckCircle size={20} className="sm:w-6 sm:h-6" />} bgClass="bg-[#0f172a] border-slate-700" hoverClass="hover:bg-slate-700 hover:border-slate-600" textClass="text-slate-300 group-hover:text-white" />
-              <ActionButton targetStatus="Müşteriye Teslim Edildi" label="Direkt Müşteriye Teslim" icon={<Users size={20} className="sm:w-6 sm:h-6" />} bgClass="bg-green-900/20 border-green-800" hoverClass="hover:bg-green-600 hover:border-green-600" textClass="text-green-400 group-hover:text-white" />
-            </>
-          )}
-          {ticket.status === 'Servisten Döndü' && (
-            <div className="col-span-2 w-full">
-              <ActionButton targetStatus="Müşteriye Teslim Edildi" label="Müşteriye Teslim Et" icon={<Users size={20} className="sm:w-6 sm:h-6" />} bgClass="bg-green-900/20 border-green-800" hoverClass="hover:bg-green-600 hover:border-green-600" textClass="text-green-400 group-hover:text-white" />
-            </div>
-          )}
-        </div>
-      )}
+
+
+      {/* TEKLİF MODAL */}
+      {showQuoteModal && <QuoteModal ticket={ticket} onSave={handleSaveQuote} onClose={() => setShowQuoteModal(false)} />}
 
       <div className="flex border-b border-slate-800 mb-8 px-2 transition-colors">
         <button onClick={() => setActiveTab('detay')} className={`pb-4 px-6 text-sm md:text-base font-black border-b-4 transition-colors ${activeTab === 'detay' ? 'text-blue-400 border-blue-400' : 'border-transparent text-slate-500 hover:text-slate-200'}`}>Kayıt Detayları</button>
@@ -1967,16 +2397,198 @@ function TicketDetailView({ ticket, allTickets, onStatusChangeRequest, onBack, c
                     <input type="text" name="serialNumber" value={editForm.serialNumber} onChange={handleEditChange} className="w-full px-3 py-2 rounded-xl border border-slate-700 bg-slate-900 text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none font-mono font-black text-sm uppercase transition-colors" />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-400 mb-1">Şikayet / Arıza Notu</label>
+                    <label className="block text-xs font-bold text-slate-400 mb-1">Cihaz Şikayeti (İlk Kabul)</label>
                     <textarea name="complaint" value={editForm.complaint} onChange={handleEditChange} rows="2" className="w-full px-3 py-2 rounded-xl border border-slate-700 bg-slate-900 text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none font-medium text-sm transition-colors"></textarea>
                   </div>
-                  <div className="flex justify-end gap-2 pt-2 border-t border-blue-900/50">
-                    <button onClick={() => {setIsEditing(false); setEditForm(ticket);}} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs transition-colors">İptal</button>
-                    <button onClick={handleSaveEdit} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs flex items-center gap-1 shadow-md transition-colors"><Save size={14}/> Kaydet</button>
+
+                  <div className="pt-2 mt-4 border-t border-slate-800 space-y-4">
+                     <div>
+                       <label className="block text-xs font-bold text-slate-400 mb-1 flex items-center gap-1"><Shield size={12} className="text-orange-400"/> İÇ NOTLAR (Müşteri Göremez)</label>
+                       <textarea name="internalNote" value={editForm.internalNote} onChange={handleEditChange} rows="2" className="w-full px-3 py-2 rounded-xl border border-orange-900/30 bg-slate-900 text-slate-200 focus:ring-2 focus:ring-orange-500 outline-none font-medium text-sm transition-colors" placeholder="Personel için özel notlar..."></textarea>
+                     </div>
+                     <div>
+                       <label className="block text-xs font-bold text-slate-400 mb-1 flex items-center gap-1"><Info size={12} className="text-blue-400"/> MÜŞTERİ NOTU (Public)</label>
+                       <textarea name="serviceNote" value={editForm.serviceNote} onChange={handleEditChange} rows="2" className="w-full px-3 py-2 rounded-xl border border-blue-900/30 bg-slate-900 text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none font-medium text-sm transition-colors" placeholder="Müşterinin sorgulama ekranında göreceği açıklama..."></textarea>
+                     </div>
+                  </div>
+
+                  {/* TARİH DÜZENLEME (Geçmiş Adımlar) */}
+                  <div className="pt-4 border-t border-slate-800 space-y-4">
+                    <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Tarih Düzenleme</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-500 mb-1">Alınma Tarihi</label>
+                        <input type="datetime-local" name="dateReceived" value={editForm.dateReceived ? editForm.dateReceived.slice(0,16) : ''} onChange={handleEditChange} className="w-full px-3 py-2 rounded-lg border border-slate-700 bg-slate-900 text-white text-xs outline-none" />
+                      </div>
+                      {ticket.dateSent && (
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-500 mb-1">Servis Başlangıç</label>
+                          <input type="datetime-local" name="dateSent" value={editForm.dateSent ? editForm.dateSent.slice(0,16) : ''} onChange={handleEditChange} className="w-full px-3 py-2 rounded-lg border border-slate-700 bg-slate-900 text-white text-xs outline-none" />
+                        </div>
+                      )}
+                      {ticket.dateReturned && (
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-500 mb-1">Servis Bitiş</label>
+                          <input type="datetime-local" name="dateReturned" value={editForm.dateReturned ? editForm.dateReturned.slice(0,16) : ''} onChange={handleEditChange} className="w-full px-3 py-2 rounded-lg border border-slate-700 bg-slate-900 text-white text-xs outline-none" />
+                        </div>
+                      )}
+                      {ticket.dateDelivered && (
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-500 mb-1">Teslim Tarihi</label>
+                          <input type="datetime-local" name="dateDelivered" value={editForm.dateDelivered ? editForm.dateDelivered.slice(0,16) : ''} onChange={handleEditChange} className="w-full px-3 py-2 rounded-lg border border-slate-700 bg-slate-900 text-white text-xs outline-none" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* GARANTİ BİLGİSİ DÜZENLEME */}
+                  <div className="pt-4 border-t border-slate-800 space-y-3">
+                    <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1"><Shield size={12} className="text-green-400"/> Garanti Bilgisi (Manuel Düzenleme)</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-500 mb-1">Garanti Durumu</label>
+                        <select name="warrantyManualStatus" value={editForm.warrantyManualStatus || (warrantyInfo?.isInWarranty ? 'in' : 'out')} onChange={handleEditChange} className="w-full px-3 py-2 rounded-lg border border-slate-700 bg-slate-900 text-white text-xs outline-none">
+                          <option value="in">Garantili</option>
+                          <option value="out">Garanti Dışı</option>
+                          <option value="unknown">Bilinmiyor</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-500 mb-1">Garanti Bitiş Tarihi</label>
+                        <input type="date" name="warrantyManualEndDate" value={editForm.warrantyManualEndDate || (warrantyInfo?.endDate || '')} onChange={handleEditChange} className="w-full px-3 py-2 rounded-lg border border-slate-700 bg-slate-900 text-white text-xs outline-none" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-4 border-t border-blue-900/50">
+                    <button onClick={() => {setIsEditing(false);}} className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs transition-colors">İptal</button>
+                    <button onClick={handleSaveEdit} className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl text-xs flex items-center gap-2 shadow-xl transition-all active:scale-95"><Save size={16}/> DEĞİŞİKLİKLERİ KAYDET</button>
                   </div>
                 </div>
               ) : (
-                <p className="text-slate-200 text-sm md:text-base whitespace-pre-wrap bg-[#0f172a] p-5 rounded-2xl border border-slate-800 font-medium leading-relaxed transition-colors">{ticket.complaint || "-"}</p>
+                <>
+                  {/* KABUL BİLGİLERİ VE NOTLAR BLOĞU */}
+                  <div className="space-y-6">
+                    <div className="bg-slate-900 rounded-3xl overflow-hidden border border-slate-800 shadow-sm transition-colors">
+                      <div className="bg-slate-950 px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-gradient-to-r from-slate-950 to-slate-900">
+                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2"><Smartphone size={14} className="text-blue-500"/> İLK KABUL BİLGİLERİ</span>
+                        <div className="flex gap-1">
+                          <div className="h-1.5 w-1.5 rounded-full bg-blue-500/50"></div>
+                          <div className="h-1.5 w-1.5 rounded-full bg-slate-700"></div>
+                        </div>
+                      </div>
+                      <div className="p-8">
+                         <div className="text-slate-200 text-lg md:text-xl font-medium leading-relaxed italic border-l-4 border-blue-600 pl-6 py-2 bg-blue-600/5 rounded-r-xl">
+                           "{ticket.complaint || "Şikayet belirtilmemiş."}"
+                         </div>
+                      </div>
+                    </div>
+
+                    {/* OPERASYONEL NOTLAR (İÇ VE DIŞ) */}
+                    <div className="space-y-8">
+                      {/* BİRLEŞİK NOT EKLEME ALANI */}
+                      <div className="bg-slate-900 rounded-[2.5rem] border border-slate-800 shadow-2xl overflow-hidden transition-all hover:border-slate-700">
+                        <div className="px-8 py-5 border-b border-slate-800 bg-slate-950/50 flex justify-between items-center">
+                           <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-2xl bg-blue-600/10 flex items-center justify-center border border-blue-500/20">
+                                <MessageCircle size={20} className="text-blue-500" />
+                              </div>
+                              <span className="text-sm font-black text-white uppercase tracking-widest">NOT EKLE</span>
+                           </div>
+                           <div className="flex bg-slate-950 border border-slate-800 p-1 rounded-2xl gap-1">
+                              <button 
+                                onClick={() => setNewNoteType('internal')} 
+                                className={`px-5 py-2 rounded-xl text-[11px] font-black transition-all ${newNoteType === 'internal' ? 'bg-orange-600 text-white shadow-lg shadow-orange-900/20' : 'text-slate-500 hover:text-slate-300'}`}
+                              >
+                                İÇ NOT
+                              </button>
+                              <button 
+                                onClick={() => setNewNoteType('public')} 
+                                className={`px-5 py-2 rounded-xl text-[11px] font-black transition-all ${newNoteType === 'public' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-500 hover:text-slate-300'}`}
+                              >
+                                MÜŞTERİYE
+                              </button>
+                           </div>
+                        </div>
+                        <div className="p-8">
+                           <textarea 
+                             value={newNote} 
+                             onChange={e => setNewNote(e.target.value)} 
+                             placeholder={newNoteType === 'internal' ? "Sadece personelin göreceği gizli not..." : "Müşterinin sorgulama ekranında göreceği açık not..."}
+                             className={`w-full bg-slate-950 border ${newNoteType === 'internal' ? 'border-orange-900/30 focus:ring-orange-500/50' : 'border-blue-900/30 focus:ring-blue-500/50'} rounded-3xl p-6 text-base text-slate-200 outline-none focus:ring-2 transition-all min-h-[140px] font-medium leading-relaxed shadow-inner`}
+                           />
+                           <div className="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+                              <div className="text-xs font-bold text-slate-500 italic flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                                {user.displayName} olarak yazıyorsunuz...
+                              </div>
+                              <button 
+                                onClick={handleAddNote} 
+                                disabled={!newNote.trim()}
+                                className={`w-full sm:w-auto px-10 py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-3 transition-all shadow-xl active:scale-95 disabled:opacity-30 ${newNoteType === 'internal' ? 'bg-orange-600 hover:bg-orange-700 shadow-orange-900/20' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-900/20'} text-white uppercase tracking-widest`}
+                              >
+                                <Send size={18}/> NOTU SİSTEME EKLE
+                              </button>
+                           </div>
+                        </div>
+                      </div>
+
+                      {/* NOT AKIŞI (FEED) */}
+                      <div className="space-y-4">
+                        {(ticket.notes || []).length === 0 ? (
+                           <div className="text-center py-12 bg-slate-900/30 rounded-[2.5rem] border-2 border-dashed border-slate-800 text-slate-600 text-sm font-bold flex flex-col items-center gap-3">
+                             <MessageCircle size={32} className="opacity-20" />
+                             Henüz bir not eklenmemiş.
+                           </div>
+                        ) : (
+                           [...(ticket.notes || [])].reverse().map(note => (
+                             <div key={note.id} className={`bg-slate-900 rounded-[2rem] border ${note.type === 'internal' ? 'border-orange-900/20 hover:border-orange-900/40' : 'border-blue-900/20 hover:border-blue-900/40'} overflow-hidden transition-all shadow-lg group`}>
+                               <div className={`px-6 py-3 flex justify-between items-center ${note.type === 'internal' ? 'bg-orange-900/5' : 'bg-blue-900/5'}`}>
+                                 <div className="flex items-center gap-4">
+                                   <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider ${note.type === 'internal' ? 'bg-orange-900/40 text-orange-400' : 'bg-blue-900/40 text-blue-400'}`}>
+                                     {note.type === 'internal' ? 'İÇ NOT' : 'MÜŞTERİ NOTU'}
+                                   </span>
+                                   <div className="flex items-center gap-2">
+                                     <span className="text-xs font-black text-slate-200 uppercase tracking-tight">{note.personnel}</span>
+                                     <span className="text-[10px] font-bold text-slate-600 border-l border-slate-800 pl-2">{formatDateTime(note.date)}</span>
+                                   </div>
+                                 </div>
+                                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                   <button onClick={() => { setEditingNoteId(note.id); setInlineNoteValue(note.text); }} className="p-2 text-slate-500 hover:text-white hover:bg-slate-800 rounded-lg transition-all"><Edit size={16}/></button>
+                                   <button onClick={() => handleDeleteNote(note.id)} className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-all"><Trash2 size={16}/></button>
+                                 </div>
+                               </div>
+                               <div className="p-6">
+                                 {editingNoteId === note.id ? (
+                                   <div className="space-y-4">
+                                     <textarea 
+                                       autoFocus 
+                                       value={inlineNoteValue} 
+                                       onChange={e => setInlineNoteValue(e.target.value)} 
+                                       className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-sm text-slate-200 outline-none focus:ring-2 focus:ring-blue-500 font-medium transition-all"
+                                       rows="3"
+                                     />
+                                     <div className="flex justify-end gap-3">
+                                       <button onClick={() => setEditingNoteId(null)} className="px-4 py-2 text-xs text-slate-500 font-bold hover:text-slate-300 transition-colors">İPTAL</button>
+                                       <button onClick={() => handleUpdateNote(note.id, inlineNoteValue)} className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black shadow-lg shadow-blue-900/20 transition-all active:scale-95">GÜNCELLE</button>
+                                     </div>
+                                   </div>
+                                 ) : (
+                                   <p className="text-base font-medium text-slate-300 leading-relaxed whitespace-pre-wrap">{note.text}</p>
+                                 )}
+                                 {note.lastUpdate && (
+                                   <div className="mt-4 pt-3 border-t border-slate-800/50 flex items-center gap-2 text-[9px] text-slate-600 font-bold uppercase tracking-widest">
+                                     <Clock size={10} /> SON GÜNCELLEME: {formatDateTime(note.lastUpdate)}
+                                   </div>
+                                 )}
+                               </div>
+                             </div>
+                           ))
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </>
               )}
               
               <div className="mt-6 border-t border-slate-800 pt-5">
@@ -2009,50 +2621,156 @@ function TicketDetailView({ ticket, allTickets, onStatusChangeRequest, onBack, c
               </div>
             </div>
 
-            {ticket.repairType && !isEditing && (
-              <div className="bg-blue-900/10 p-6 md:p-8 rounded-3xl shadow-sm border border-blue-900/50 relative overflow-hidden transition-colors">
-                <div className="absolute top-0 left-0 w-2 h-full bg-blue-600"></div>
-                <h3 className="text-xs font-black text-blue-400 uppercase tracking-widest mb-5 flex items-center gap-2"><Wrench size={14}/> Servis ve Onarım Raporu</h3>
-                <div className="grid grid-cols-2 gap-6 mb-5">
-                  <div>
-                    <span className="text-xs font-bold text-slate-400 block mb-1">Onarım Tipi</span>
-                    <span className="font-black text-white text-lg">{ticket.repairType}</span>
-                  </div>
+
+
+            {ticket.repairType && (
+              <div className="bg-blue-900/10 rounded-3xl overflow-hidden border border-blue-900/50 shadow-sm transition-colors">
+                <div className="bg-blue-900/20 px-6 py-3 border-b border-blue-800/30 flex justify-between items-center">
+                  <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-2"><Wrench size={14}/> Servis Sonuç Raporu</span>
+                  <div className="px-2 py-0.5 rounded bg-blue-600 text-white text-[9px] font-black uppercase">{ticket.repairType}</div>
                 </div>
-                {ticket.serviceNote && (
-                  <div>
-                    <span className="text-xs font-bold text-slate-400 block mb-2">Servis Notu</span>
-                    <p className="text-slate-200 text-sm md:text-base bg-slate-900 p-5 rounded-2xl border border-blue-900/50 shadow-sm font-medium leading-relaxed transition-colors">{ticket.serviceNote}</p>
-                  </div>
-                )}
+                <div className="p-6">
+                  <p className="text-sm font-medium text-slate-200 leading-relaxed italic">
+                    "{ticket.serviceNote || "İşlem detayı girilmemiş."}"
+                  </p>
+                </div>
               </div>
             )}
 
+            {/* TEKLİF VE FİNANSAL BİLGİLER - EN ALTA TAŞINDI */}
+            {(ticket.techQuoteReceived || ticket.customerQuoteGiven) && (
+              <div className="bg-slate-900 p-6 md:p-8 rounded-3xl shadow-sm border border-slate-800 relative overflow-hidden transition-colors">
+                <div className="absolute top-0 left-0 w-2 h-full bg-blue-600"></div>
+                <h3 className="text-xs font-black text-blue-400 uppercase tracking-widest mb-6 flex items-center gap-2"><Download size={14}/> Teklif ve Onay Durumu</h3>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800">
+                    <span className="text-[10px] font-black text-slate-500 uppercase block mb-3 font-mono">Teknik Servis Maliyeti</span>
+                    {ticket.techQuoteReceived ? (
+                      <div className="space-y-3">
+                        <div className="flex items-baseline gap-2">
+                           <div className="text-xl font-black text-white">{ticket.techQuoteAmount?.toLocaleString('tr-TR')} TL</div>
+                           <div className="text-[9px] text-slate-500 font-bold uppercase">{formatDateTime(ticket.techQuoteDate)}</div>
+                        </div>
+                        {ticket.techQuoteNote && (
+                          <div className="text-[11px] text-slate-400 bg-black/30 p-3 rounded-xl border border-white/5 leading-relaxed italic">
+                            "{ticket.techQuoteNote}"
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-xs text-slate-600 font-bold flex items-center gap-2"><AlertCircle size={14}/> Henüz maliyet çıkmadı.</div>
+                    )}
+                  </div>
+
+                  <div className={`p-5 rounded-2xl border ${ticket.customerQuoteGiven ? 'bg-blue-900/10 border-blue-900/30' : 'bg-slate-950 border-slate-800'}`}>
+                    <div className="flex justify-between items-start mb-3">
+                      <span className="text-[10px] font-black text-blue-500 uppercase block font-mono">
+                        Müşteri Teklifi
+                        {ticket.customerQuoteGiven && <span className="text-green-500 font-bold ml-1">(+{ticket.marginPercent}%)</span>}
+                      </span>
+                    </div>
+                    {ticket.customerQuoteGiven ? (
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center text-[10px]">
+                          <div className="text-xl font-black text-blue-400">{ticket.customerQuoteAmount?.toLocaleString('tr-TR')} TL</div>
+                          <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase shadow-sm ${ticket.customerQuoteAccepted === 'Onaylandı' ? 'bg-green-600 text-white' : ticket.customerQuoteAccepted === 'Reddedildi' ? 'bg-red-600 text-white' : 'bg-orange-500 text-white'}`}>
+                            {ticket.customerQuoteAccepted === 'Onaylandı' ? 'ONAYLANDI' : ticket.customerQuoteAccepted === 'Reddedildi' ? 'REDDEDİLDİ' : 'BEKLİYOR'}
+                          </span>
+                        </div>
+                        {ticket.customerQuoteNote && (
+                          <div className="text-[11px] text-blue-300/70 bg-blue-900/20 p-3 rounded-xl border border-blue-800/30 leading-relaxed italic">
+                            "{ticket.customerQuoteNote}"
+                          </div>
+                        )}
+                        <div className="text-[9px] text-slate-500 font-bold uppercase text-right">{formatDateTime(ticket.customerQuoteDate)} İletildi</div>
+                      </div>
+                    ) : (
+                      <div className="text-xs text-slate-600 font-bold flex items-center gap-2"><AlertCircle size={14}/> Henüz teklif verilmedi.</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="space-y-6">
-            <div className="bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-800 transition-colors">
-              <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-6">Tarihsel Süreç</h3>
+            <div className="bg-slate-900 p-6 md:p-8 rounded-3xl shadow-sm border border-slate-800 transition-colors">
+              <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-8 flex items-center gap-2">
+                <History size={14} className="text-blue-500"/> Tarihsel Süreç
+              </h3>
               
-              <TimelineItem title="Müşteriden Alındı" date={ticket.dateReceived} personnel={ticket.personnelReceived || ticket.personnel} isCompleted={currentIndex >= 0} isLast={false} />
-              <TimelineItem title="Servise Gönderildi" date={ticket.dateSent} personnel={ticket.personnelSent} isCompleted={currentIndex >= 1} isLast={false} />
-              <TimelineItem title="Servisten Döndü" date={ticket.dateReturned} personnel={ticket.personnelReturned} isCompleted={currentIndex >= 2} isLast={false} />
-              <TimelineItem title="Müşteriye Teslim Edildi" date={ticket.dateDelivered} personnel={ticket.personnelDelivered} isCompleted={currentIndex >= 3} isLast={true} />
-              
-              <div className={`mt-6 border border-slate-800 rounded-2xl p-4 flex flex-col items-center gap-2 text-center transition-colors ${ticket.status === 'Müşteriye Teslim Edildi' ? 'bg-[#0f172a] text-slate-400' : 'bg-orange-900/20 text-orange-400 border-orange-900/50 shadow-inner'}`}>
-                <div className="flex items-center gap-1.5">
-                  <Clock size={18} className={ticket.status !== 'Müşteriye Teslim Edildi' ? "animate-spin-slow" : "text-slate-500"}/>
-                  <span className="text-xs font-bold uppercase tracking-wider">{ticket.status === 'Müşteriye Teslim Edildi' ? 'Toplam İşlem Süresi' : 'Devam Eden İşlem Süresi'}</span>
-                </div>
-                <span className="text-xl font-black">{ticket.status === 'Müşteriye Teslim Edildi' ? formatDuration(ticket.dateReceived, ticket.dateDelivered) : formatDuration(ticket.dateReceived, currentTime.toISOString())}</span>
+              <div className="space-y-0">
+                <TimelineItem title={STATUS_LABELS.RECEIVED} date={ticket.dateReceived} personnel={ticket.personnelReceived || ticket.personnel} isCompleted={currentIndex >= 0} />
+                
+                <TimelineItem title={STATUS_LABELS.SENT} date={ticket.dateSent} personnel={ticket.personnelSent} isCompleted={currentIndex >= 1} />
+
+                {ticket.techQuoteReceived && (
+                    <TimelineItem title="Servisten Teklif Geldi" date={ticket.techQuoteDate} personnel={ticket.lastPersonnel || ticket.personnel} isCompleted={true} />
+                )}
+                
+                {ticket.customerQuoteGiven && (
+                    <TimelineItem 
+                      title="Teklif Müşteriye İletildi" 
+                      date={ticket.customerQuoteDate} 
+                      subTitle={
+                        <div className="flex flex-col gap-2">
+                          <span className="text-blue-400 font-black flex items-center gap-2">
+                             <Download size={12}/> {ticket.customerQuoteAmount?.toLocaleString('tr-TR')} TL Teklif Edildi
+                          </span>
+                          {ticket.customerQuoteAccepted === 'Bekleniyor' && (
+                            <div className="flex gap-2 mt-2">
+                               <button 
+                                 onClick={() => onUpdateTicket(ticket.id, { customerQuoteAccepted: 'Onaylandı', customerQuoteResponseDate: new Date().toISOString() })}
+                                 className="bg-green-600 hover:bg-green-500 text-white text-[10px] px-3 py-1.5 rounded-lg font-black transition-all active:scale-95 shadow-lg shadow-green-900/20"
+                               >
+                                 TEKLİFİ ONAYLA
+                               </button>
+                               <button 
+                                 onClick={() => onUpdateTicket(ticket.id, { customerQuoteAccepted: 'Reddedildi', customerQuoteResponseDate: new Date().toISOString() })}
+                                 className="bg-red-600 hover:bg-red-500 text-white text-[10px] px-3 py-1.5 rounded-lg font-black transition-all active:scale-95 shadow-lg shadow-red-900/20"
+                               >
+                                 TEKLİFİ REDDET
+                               </button>
+                            </div>
+                          )}
+                        </div>
+                      }
+                      isCompleted={true} 
+                    />
+                )}
+
+                {ticket.customerQuoteGiven && ticket.customerQuoteAccepted !== 'Bekleniyor' && (
+                    <TimelineItem 
+                      title={`Teklif Müşteri Tarafından ${ticket.customerQuoteAccepted === 'Onaylandı' ? 'Onaylandı' : 'Reddedildi'}`}
+                      date={ticket.customerQuoteResponseDate}
+                      subTitle={
+                        <div className="flex flex-col gap-1">
+                           <span className={`flex items-center gap-2 font-black ${ticket.customerQuoteAccepted === 'Onaylandı' ? 'text-green-400' : 'text-red-400'}`}>
+                              {ticket.customerQuoteAccepted === 'Onaylandı' ? <CheckSquare size={14}/> : <X size={14}/>}
+                              {ticket.customerQuoteAccepted === 'Onaylandı' ? 'MÜŞTERİ ONAYI ALINDI' : 'MÜŞTERİ TEKLİFİ REDDETTİ'}
+                           </span>
+                           {ticket.customerQuoteDate && ticket.customerQuoteResponseDate && (
+                             <span className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter mt-1">
+                                Onay Süreci: {formatDuration(ticket.customerQuoteDate, ticket.customerQuoteResponseDate)} sürdü
+                             </span>
+                           )}
+                        </div>
+                      }
+                      isCompleted={true}
+                    />
+                )}
+
+                <TimelineItem title={STATUS_LABELS.RETURNED + (ticket.repairType ? ` (${ticket.repairType})` : '')} date={ticket.dateReturned} personnel={ticket.personnelReturned} isCompleted={currentIndex >= 2} />
+                <TimelineItem title={STATUS_LABELS.DELIVERED} date={ticket.dateDelivered} personnel={ticket.personnelDelivered} isCompleted={currentIndex >= 3} isLast={true} />
               </div>
-            </div>
-            
-            <div className="bg-[#1e293b] p-5 rounded-3xl border border-slate-800 text-sm flex items-center gap-4 transition-colors">
-              <div className="w-10 h-10 bg-blue-900/50 text-blue-300 rounded-full flex items-center justify-center font-black text-lg">{ticket.personnel ? ticket.personnel.charAt(0).toUpperCase() : '?'}</div>
-              <div>
-                <span className="text-slate-500 block mb-0.5 text-xs font-bold">Kaydı Açan Personel</span>
-                <div className="font-black text-slate-200">{ticket.personnel || 'Bilinmiyor'}</div>
+              
+              <div className={`mt-8 border border-slate-800 rounded-2xl p-4 flex flex-col items-center gap-2 text-center transition-colors ${ticket.status === STATUS_LABELS.DELIVERED ? 'bg-[#0f172a] text-slate-400' : 'bg-blue-900/10 text-blue-400 border-blue-900/20'}`}>
+                <div className="flex items-center gap-1.5">
+                  <Clock size={16} className={ticket.status !== STATUS_LABELS.DELIVERED ? "animate-pulse" : "text-slate-500"}/>
+                  <span className="text-[10px] font-black uppercase tracking-widest">{ticket.status === STATUS_LABELS.DELIVERED ? 'TOPLAM SÜRE' : 'İŞLEM SÜRESİ'}</span>
+                </div>
+                <span className="text-xl font-black">{ticket.status === STATUS_LABELS.DELIVERED ? formatDuration(ticket.dateReceived, ticket.dateDelivered) : formatDuration(ticket.dateReceived, currentTime.toISOString())}</span>
               </div>
             </div>
           </div>
@@ -2084,7 +2802,7 @@ function TicketDetailView({ ticket, allTickets, onStatusChangeRequest, onBack, c
                       </div>
                       <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-4 flex-shrink-0">
                         <div className="hidden sm:block">
-                          <StatusBadge status={hist.status} />
+                          <StatusBadge status={hist.status} repairType={hist.repairType} />
                         </div>
                         <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-800 shadow-sm flex items-center justify-center flex-shrink-0 border border-slate-600">
                           {isExpanded ? <ChevronUp size={18} className="text-blue-400" /> : <ChevronDown size={18} className="text-slate-400" />}
@@ -2096,7 +2814,7 @@ function TicketDetailView({ ticket, allTickets, onStatusChangeRequest, onBack, c
                       <div className="p-4 sm:p-6 border-t border-slate-800 bg-slate-900 grid grid-cols-1 md:grid-cols-2 gap-8 animate-in slide-in-from-top-2 fade-in transition-colors">
                         <div className="space-y-6">
                           <div className="sm:hidden mb-4">
-                             <StatusBadge status={hist.status} />
+                             <StatusBadge status={hist.status} repairType={hist.repairType} />
                           </div>
                           <div>
                             <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Müşteri Şikayeti</span>
@@ -2252,7 +2970,7 @@ function DeviceHistoryModal({ serialNumber, allTickets, onClose, currentTime }) 
             <div key={t.id} className="bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-700 transition-colors">
               <div className="flex justify-between items-start mb-2">
                 <div className="font-bold text-white">{t.customer}</div>
-                <StatusBadge status={t.status} />
+                <StatusBadge status={t.status} repairType={t.repairType} />
               </div>
               <div className="text-xs text-slate-400 mb-3">{formatDateTime(t.dateReceived)}</div>
               <div className="text-sm font-medium text-slate-300">
@@ -2274,29 +2992,53 @@ function DeviceHistoryModal({ serialNumber, allTickets, onClose, currentTime }) 
   );
 }
 
-function StatusBadge({ status }) {
+function StatusBadge({ status, repairType }) {
   const styles = {
-    'Müşteriden Alındı': 'bg-orange-900/30 text-orange-400 border-orange-800',
-    'Servise Gönderildi': 'bg-blue-900/30 text-blue-400 border-blue-800',
-    'Servisten Döndü': 'bg-green-900/30 text-green-400 border-green-800',
-    'Müşteriye Teslim Edildi': 'bg-slate-800 text-slate-400 border-slate-700',
+    [STATUS_LABELS.RECEIVED]: 'bg-orange-900/30 text-orange-400 border-orange-800',
+    [STATUS_LABELS.SENT]: 'bg-blue-900/30 text-blue-400 border-blue-800',
+    [STATUS_LABELS.RETURNED]: 'bg-green-900/30 text-green-400 border-green-800',
+    [STATUS_LABELS.DELIVERED]: 'bg-slate-800 text-slate-400 border-slate-700',
   };
-  return <span className={`px-2.5 py-1 text-[10px] md:text-xs font-bold rounded-lg flex-shrink-0 border ${styles[status]} text-center transition-colors`}>{status}</span>;
+  
+  const label = status === STATUS_LABELS.RETURNED && repairType 
+    ? `${status} (${repairType})` 
+    : status;
+
+  return <span className={`px-2.5 py-1 text-[10px] md:text-xs font-bold rounded-lg flex-shrink-0 border ${styles[status]} text-center transition-colors uppercase tracking-tight`}>{label}</span>;
 }
 
-function TimelineItem({ title, date, personnel, isCompleted, isLast }) {
+function TimelineItem({ title, date, personnel, subTitle, isCompleted, isLast }) {
   return (
     <div className="flex relative">
-      {!isLast && <div className={`absolute top-6 bottom-[-20px] left-[11px] w-0.5 ${isCompleted ? 'bg-blue-500' : 'bg-slate-700'}`}></div>}
+      {!isLast && <div className={`absolute top-6 bottom-[-8px] left-[11px] w-0.5 ${isCompleted ? 'bg-blue-500' : 'bg-slate-800'}`}></div>}
       <div className="mr-5 mt-1 relative z-10">
-        <div className={`w-6 h-6 rounded-full border-[3px] flex items-center justify-center transition-colors ${isCompleted ? 'bg-slate-900 border-blue-500' : 'bg-slate-800 border-slate-600'}`}>
-          {isCompleted && <div className="w-2.5 h-2.5 rounded-full bg-blue-500"></div>}
+        <div className={`w-6 h-6 rounded-full border-[3.5px] flex items-center justify-center transition-all duration-500 ${isCompleted ? 'bg-slate-950 border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.3)]' : 'bg-slate-900 border-slate-700'}`}>
+          {isCompleted && <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>}
         </div>
       </div>
-      <div className="pb-8">
-        <div className={`text-sm font-black ${isCompleted ? 'text-white' : 'text-slate-500'}`}>{title}</div>
-        {date && <div className="text-xs text-slate-400 mt-1.5 font-mono font-medium">{formatDateTime(date)}</div>}
-        {personnel && isCompleted && <div className="text-[10px] text-slate-500 mt-1 uppercase tracking-wide">İşlem: <span className="font-bold text-slate-300">{personnel}</span></div>}
+      <div className="pb-8 flex-1">
+        <div className={`text-sm md:text-base font-black tracking-tight leading-none ${isCompleted ? 'text-white' : 'text-slate-600'}`}>{title}</div>
+        
+        {/* ALT DAL (SUB-BRANCH) BİLGİSİ */}
+        {subTitle && (
+          <div className="mt-2 ml-1 px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800/50 inline-flex items-center text-[11px] font-black uppercase tracking-widest shadow-inner">
+            {subTitle}
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 ml-1">
+          {date && (
+            <div className="text-[10px] text-slate-400 font-mono flex items-center gap-1.5 opacity-80 font-bold">
+              <Clock size={10} className="text-slate-600"/> {formatDateTime(date)}
+            </div>
+          )}
+          {personnel && isCompleted && (
+            <div className="text-[10px] text-slate-500 flex items-center gap-1.5 font-bold">
+              <span className="text-[9px] uppercase font-black text-slate-600 opacity-50">İŞLEM:</span> 
+              <span className="text-slate-300">{personnel}</span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -2369,21 +3111,21 @@ function CustomerStatusView() {
                   {/* Sadece En Güncel Kayıt */}
                   <div className="relative">
                      <div className="mb-4 flex items-center justify-between">
-                        <StatusBadge status={ticketData[0].status} />
+                        <StatusBadge status={ticketData[0].status} repairType={ticketData[0].repairType} />
                         <span className="text-xs font-bold text-slate-500">{formatDateTime(ticketData[0].dateReceived)}</span>
                      </div>
                      
                      <div className="space-y-4">
                         <div className="text-sm text-slate-300 font-medium bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-sm relative overflow-hidden">
                            <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
-                           <span className="text-[10px] text-blue-400 uppercase font-black tracking-widest block mb-1.5 flex items-center gap-1"><AlertCircle size={12}/> Mevcut Kayıt Şikayeti</span>
+                           <span className="text-[10px] text-blue-400 uppercase font-black tracking-widest block mb-1.5 flex items-center gap-1"><AlertCircle size={12}/> Müşteri Şikayeti</span>
                            <div className="leading-relaxed">{ticketData[0].complaint || '-'}</div>
                         </div>
 
-                        {ticketData[0].repairType && (
+                        {ticketData[0].serviceNote && (
                            <div className="text-sm text-slate-300 font-medium bg-blue-900/10 p-4 rounded-xl border border-blue-900/30 shadow-sm relative overflow-hidden">
                               <div className="absolute top-0 left-0 w-1 h-full bg-blue-400"></div>
-                              <span className="text-[10px] text-blue-400 uppercase font-black tracking-widest block mb-1.5 flex items-center gap-1"><Wrench size={12}/> Uygulanan İşlem ({ticketData[0].repairType})</span>
+                              <span className="text-[10px] text-blue-400 uppercase font-black tracking-widest block mb-1.5 flex items-center gap-1"><Info size={12}/> Servis İşlem Notu</span>
                               <div className="leading-relaxed">{ticketData[0].serviceNote || '-'}</div>
                            </div>
                         )}
@@ -2417,7 +3159,7 @@ function CustomerStatusView() {
                                     </div>
                                     {t.serviceNote && (
                                        <div className="mt-2 text-xs text-blue-400/70 leading-relaxed italic border-l border-blue-900/30 pl-3">
-                                          <span className="text-[9px] uppercase font-black text-blue-900 block not-italic mb-0.5">Uygulanan İşlem:</span>
+                                          <span className="text-[9px] uppercase font-black text-blue-900 block not-italic mb-0.5">Servis İşlem Notu:</span>
                                           {t.serviceNote}
                                        </div>
                                     )}
