@@ -12,8 +12,8 @@ const API_URL = isProductionDomain ? `https://api.devoteam.net.tr` : `${window.l
 const API_KEY = 'devoteam_secure_api_key_2026';
 const STATUS_LABELS = {
   RECEIVED: 'Müşteriden Alındı',
-  SENT: 'Servise Gönderildi',
-  RETURNED: 'Servisten Döndü',
+  SENT: 'Servis İşlemleri Başlatıldı',
+  RETURNED: 'Servis İşlemi Tamamlandı (Teslim Edilecek)',
   DELIVERED: 'Müşteriye Teslim Edildi'
 };
 
@@ -459,7 +459,7 @@ export default function App() {
       }
       await saveLogToDb({ ticketId: ticketId, status: 'Müşteriden Alındı', personnel: user.displayName, timestamp: now, repairType: null, serviceNote: null });
       if (isDirectToService) {
-        await saveLogToDb({ ticketId: ticketId, status: 'Servise Gönderildi', personnel: user.displayName, timestamp: now, repairType: null, serviceNote: null });
+        await saveLogToDb({ ticketId: ticketId, status: 'Servis İşlemleri Başlatıldı', personnel: user.displayName, timestamp: now, repairType: null, serviceNote: null });
       }
 
       const ticketData = {
@@ -634,7 +634,7 @@ export default function App() {
             }} />}
             {currentView === 'list' && <TicketListView tickets={tickets} onNavigate={handleNavigate} isBulkMode={isBulkMode} setIsBulkMode={setIsBulkMode} selectedForBulk={selectedForBulk} setSelectedForBulk={setSelectedForBulk} onStatusChangeRequest={handleStatusChangeRequest} customers={customers} brandsModels={brandsModels} listFilters={listFilters} currentTime={currentTime} showToast={showToast} />}
             {currentView === 'new' && <NewTicketView allTickets={tickets} onSave={addTickets} user={user} onCancel={() => handleNavigate('list')} customers={customers} brandsModels={brandsModels} currentTime={currentTime} showToast={showToast} onCloseUnfinishedTicket={handleCloseUnfinishedTicket} />}
-            {currentView === 'fastReturn' && <FastReturnView availableTickets={tickets.filter(t => t.status === 'Servise Gönderildi' || t.status === 'Müşteriden Alındı')} onSave={processFastReturns} onCancel={() => handleNavigate('list')} customers={customers} showToast={showToast} />}
+            {currentView === 'fastReturn' && <FastReturnView availableTickets={tickets.filter(t => t.status === 'Servis İşlemleri Başlatıldı' || t.status === 'Müşteriden Alındı')} onSave={processFastReturns} onCancel={() => handleNavigate('list')} customers={customers} showToast={showToast} />}
             {currentView === 'detail' && selectedTicket && <TicketDetailView ticket={selectedTicket} allTickets={tickets} onStatusChangeRequest={handleStatusChangeRequest} onBack={() => handleNavigate('list')} currentTime={currentTime} user={user} customers={customers} brandsModels={brandsModels} onUpdateTicket={handleUpdateTicket} onDeleteTicket={handleDeleteTicketComplete} showToast={showToast} />}
           </main>
         </div>
@@ -1192,7 +1192,7 @@ function ActionModal({ targetStatus, itemIds, tickets, onClose, onSubmit }) {
 }
 
 function ExportModal({ isOpen, onClose, onExport }) {
-  const allStatuses = ['Müşteriden Alındı', 'Servise Gönderildi', 'Servisten Döndü', 'Müşteriye Teslim Edildi'];
+  const allStatuses = ['Müşteriden Alındı', 'Servis İşlemleri Başlatıldı', 'Servis İşlemi Tamamlandı (Teslim Edilecek)', 'Müşteriye Teslim Edildi'];
   const [selectedStatuses, setSelectedStatuses] = useState(allStatuses);
 
   if (!isOpen) return null;
@@ -1248,8 +1248,8 @@ function MobileNavItem({ icon, label, active, onClick }) {
 function DashboardView({ tickets, onNavigate }) {
   const stats = useMemo(() => ({
     received: tickets.filter(t => t.status === 'Müşteriden Alındı').length,
-    inService: tickets.filter(t => t.status === 'Servise Gönderildi').length,
-    returned: tickets.filter(t => t.status === 'Servisten Döndü').length,
+    inService: tickets.filter(t => t.status === 'Servis İşlemleri Başlatıldı').length,
+    returned: tickets.filter(t => t.status === 'Servis İşlemi Tamamlandı (Teslim Edilecek)').length,
     delivered: tickets.filter(t => t.status === 'Müşteriye Teslim Edildi').length,
   }), [tickets]);
 
@@ -1267,8 +1267,8 @@ function DashboardView({ tickets, onNavigate }) {
         <h2 className="text-xl md:text-2xl font-black text-white mb-4">Genel Bakış Filtreleri</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <StatCard icon={<Package className="text-orange-500" />} title="Kabul Edilen" count={stats.received} border="border-slate-800" onClick={() => onNavigate('list', null, { filterStatus: 'Müşteriden Alındı' })} />
-          <StatCard icon={<Truck className="text-blue-500" />} title="Servisteki" count={stats.inService} border="border-slate-800" onClick={() => onNavigate('list', null, { filterStatus: 'Servise Gönderildi' })} />
-          <StatCard icon={<CheckCircle className="text-green-500" />} title="Teslim Bekleyen" count={stats.returned} border="border-slate-800" onClick={() => onNavigate('list', null, { filterStatus: 'Servisten Döndü' })} />
+          <StatCard icon={<Truck className="text-blue-500" />} title="Servisteki" count={stats.inService} border="border-slate-800" onClick={() => onNavigate('list', null, { filterStatus: 'Servis İşlemleri Başlatıldı' })} />
+          <StatCard icon={<CheckCircle className="text-green-500" />} title="Teslim Bekleyen" count={stats.returned} border="border-slate-800" onClick={() => onNavigate('list', null, { filterStatus: 'Servis İşlemi Tamamlandı (Teslim Edilecek)' })} />
           <StatCard icon={<Users className="text-slate-400" />} title="Tamamlanan" count={stats.delivered} border="border-slate-800" onClick={() => onNavigate('list', null, { filterStatus: 'Müşteriye Teslim Edildi' })} />
         </div>
       </div>
@@ -2317,10 +2317,10 @@ function TicketDetailView({ ticket, allTickets, onStatusChangeRequest, onBack, c
               {ticket.status !== STATUS_LABELS.DELIVERED && !isEditing && (
                 <div className="w-full">
                   {ticket.status === STATUS_LABELS.RECEIVED && (
-                    <ActionButton targetStatus={STATUS_LABELS.SENT} label="SERVİS İŞLEMİNİ BAŞLAT" icon={<Truck size={18} />} bgClass="bg-blue-600 shadow-blue-900/20" hoverClass="hover:bg-blue-500" textClass="text-white" />
+                    <ActionButton targetStatus={STATUS_LABELS.SENT} label="BAŞLAT" icon={<Truck size={18} />} bgClass="bg-blue-600 shadow-blue-900/20" hoverClass="hover:bg-blue-500" textClass="text-white" />
                   )}
                   {ticket.status === STATUS_LABELS.SENT && (
-                    <ActionButton targetStatus={STATUS_LABELS.RETURNED} label="SERVİS İŞLEMİNİ BİTİR" icon={<CheckCircle size={18} />} bgClass="bg-orange-600 shadow-orange-900/20" hoverClass="hover:bg-orange-500" textClass="text-white" />
+                    <ActionButton targetStatus={STATUS_LABELS.RETURNED} label="BİTİR" icon={<CheckCircle size={18} />} bgClass="bg-orange-600 shadow-orange-900/20" hoverClass="hover:bg-orange-500" textClass="text-white" />
                   )}
                   {ticket.status === STATUS_LABELS.RETURNED && (
                     <ActionButton targetStatus={STATUS_LABELS.DELIVERED} label="MÜŞTERİYE TESLİM ET" icon={<Users size={18} />} bgClass="bg-green-600 shadow-green-900/20" hoverClass="hover:bg-green-500" textClass="text-white" />
@@ -3136,10 +3136,35 @@ function CustomerStatusView() {
                            <div className="leading-relaxed">{ticketData[0].complaint || '-'}</div>
                         </div>
 
-                        {ticketData[0].serviceNote && (
+                        {/* Müşteri Notları (Yeni Sistem) */}
+                        {(ticketData[0].notes || []).filter(n => n.type === 'public').map(note => (
+                           <div key={note.id} className="text-sm text-slate-300 font-medium bg-blue-900/10 p-4 rounded-xl border border-blue-900/30 shadow-sm relative overflow-hidden">
+                              <div className="absolute top-0 left-0 w-1 h-full bg-blue-400"></div>
+                              <span className="text-[10px] text-blue-400 uppercase font-black tracking-widest block mb-1.5 flex items-center gap-1"><Info size={12}/> Müşteri Notu</span>
+                              <div className="leading-relaxed">{note.text}</div>
+                              <div className="text-[10px] text-slate-500 mt-2 italic">{formatDateTime(note.date)}</div>
+                           </div>
+                        ))}
+
+                        {/* Teklif Durumu (Fiyatsız) */}
+                        {ticketData[0].customerQuoteDate && (
+                           <div className="text-sm text-slate-300 font-medium bg-emerald-900/10 p-4 rounded-xl border border-emerald-900/30 shadow-sm relative overflow-hidden">
+                              <div className="absolute top-0 left-0 w-1 h-full bg-emerald-400"></div>
+                              <span className="text-[10px] text-emerald-400 uppercase font-black tracking-widest block mb-1.5 flex items-center gap-1"><DollarSign size={12}/> Teklif Durumu</span>
+                              <div className="leading-relaxed">
+                                 {ticketData[0].customerQuoteStatus === 'Onaylandı' ? 'Teklifiniz onaylandı, işlemler devam ediyor.' : 
+                                  ticketData[0].customerQuoteStatus === 'Reddedildi' ? 'Teklif reddedildi.' : 
+                                  'Cihazınız için onarım teklifi iletilmiştir. Onayınız bekleniyor.'}
+                              </div>
+                              <div className="text-[10px] text-slate-500 mt-2 italic">Son İşlem: {formatDateTime(ticketData[0].customerQuoteResponseDate || ticketData[0].customerQuoteDate)}</div>
+                           </div>
+                        )}
+
+                        {/* Eski Sistem Notu (Geriye dönük uyumluluk için) */}
+                        {ticketData[0].serviceNote && (!ticketData[0].notes || ticketData[0].notes.length === 0) && (
                            <div className="text-sm text-slate-300 font-medium bg-blue-900/10 p-4 rounded-xl border border-blue-900/30 shadow-sm relative overflow-hidden">
                               <div className="absolute top-0 left-0 w-1 h-full bg-blue-400"></div>
-                              <span className="text-[10px] text-blue-400 uppercase font-black tracking-widest block mb-1.5 flex items-center gap-1"><Info size={12}/> Servis İşlem Notu</span>
+                              <span className="text-[10px] text-blue-400 uppercase font-black tracking-widest block mb-1.5 flex items-center gap-1"><Info size={12}/> Müşteri Notu</span>
                               <div className="leading-relaxed">{ticketData[0].serviceNote || '-'}</div>
                            </div>
                         )}

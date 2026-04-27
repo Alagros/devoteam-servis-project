@@ -29,5 +29,3 @@ backups
 pgdata
 *.sqlite
 data/
-letsencrypt
-data.zip

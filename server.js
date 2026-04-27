@@ -54,28 +54,28 @@ const initDb = async () => {
         `);
         
         // --- DATA MIGRATION: Geriye Dönük Uyumluluk ---
-        // Servis İşlemi Başladı -> Servise Gönderildi
-        // Servis İşlemi Bitti -> Servisten Döndü
+        // 1. Başlatıldı Durumu
         await pool.query(`
             UPDATE docs 
-            SET data = data || '{"status": "Servise Gönderildi"}'::jsonb 
-            WHERE resource = 'tickets' AND (data->>'status' = 'Servis İşlemi Başladı' OR data->>'status' = 'Servis İşlemi Bitti');
+            SET data = data || '{"status": "Servis İşlemleri Başlatıldı"}'::jsonb 
+            WHERE resource = 'tickets' AND (data->>'status' = 'Servise Gönderildi' OR data->>'status' = 'Servis İşlemi Başladı' OR data->>'status' = 'Servis İşlemleri Başlatıldı');
         `);
+        // 2. Tamamlandı Durumu
         await pool.query(`
             UPDATE docs 
-            SET data = data || '{"status": "Servisten Döndü"}'::jsonb 
-            WHERE resource = 'tickets' AND data->>'status' = 'Servis İşlemi Bitti';
+            SET data = data || '{"status": "Servis İşlemi Tamamlandı (Teslim Edilecek)"}'::jsonb 
+            WHERE resource = 'tickets' AND (data->>'status' = 'Servisten Döndü' OR data->>'status' = 'Servis İşlemi Tamamlandı (Teslim Edilecek)');
         `);
         // Log kayıtlarını da güncelle
         await pool.query(`
             UPDATE docs 
-            SET data = data || '{"status": "Servise Gönderildi"}'::jsonb 
-            WHERE resource = 'logs' AND data->>'status' = 'Servis İşlemi Başladı';
+            SET data = data || '{"status": "Servis İşlemleri Başlatıldı"}'::jsonb 
+            WHERE resource = 'logs' AND (data->>'status' = 'Servise Gönderildi' OR data->>'status' = 'Servis İşlemi Başladı' OR data->>'status' = 'Servis İşlemleri Başlatıldı');
         `);
         await pool.query(`
             UPDATE docs 
-            SET data = data || '{"status": "Servisten Döndü"}'::jsonb 
-            WHERE resource = 'logs' AND data->>'status' = 'Servis İşlemi Bitti';
+            SET data = data || '{"status": "Servis İşlemi Tamamlandı (Teslim Edilecek)"}'::jsonb 
+            WHERE resource = 'logs' AND (data->>'status' = 'Servisten Döndü' OR data->>'status' = 'Servis İşlemi Tamamlandı (Teslim Edilecek)');
         `);
 
         console.log('✅ PostgreSQL tablo yapısı ve veri migrasyonu hazır.');
