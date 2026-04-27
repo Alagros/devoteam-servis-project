@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+﻿import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   Camera, Search, CheckCircle, Truck, Package, History, LogOut, 
   Users, Plus, ArrowRight, Smartphone, Wrench, X, ChevronRight,
@@ -3154,7 +3154,7 @@ function CustomerStatusView() {
                         ))}
 
                         {/* Teklif Durumu (Fiyatsız) */}
-                        {ticketData[0].customerQuoteDate && (
+                        {ticketData[0].customerQuoteGiven && (
                            <div className="text-sm text-slate-300 font-medium bg-emerald-900/10 p-4 rounded-xl border border-emerald-900/30 shadow-sm relative overflow-hidden">
                               <div className="absolute top-0 left-0 w-1 h-full bg-emerald-400"></div>
                               <span className="text-[10px] text-emerald-400 uppercase font-black tracking-widest block mb-1.5 flex items-center gap-1"><DollarSign size={12}/> Teklif Durumu</span>
