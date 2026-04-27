@@ -12,8 +12,8 @@ const API_URL = isProductionDomain ? `https://api.devoteam.net.tr` : `${window.l
 const API_KEY = 'devoteam_secure_api_key_2026';
 const STATUS_LABELS = {
   RECEIVED: 'Müşteriden Alındı',
-  SENT: 'Servis İşlemi Başladı',
-  RETURNED: 'Servis Tamamlandı (Teslim Hazır)',
+  SENT: 'Servise Gönderildi',
+  RETURNED: 'Servisten Döndü',
   DELIVERED: 'Müşteriye Teslim Edildi'
 };
 
@@ -1405,7 +1405,14 @@ function TicketListView({ tickets, onNavigate, isBulkMode, setIsBulkMode, select
 
       <div className="w-full bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-800 flex flex-wrap gap-3 items-center mb-6">
         <span className="text-xs font-black text-slate-400 uppercase tracking-wider w-full sm:w-auto">Filtre & Sırala:</span>
-        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl border border-slate-700 outline-none text-sm font-bold bg-slate-950 text-slate-200 focus:ring-2 focus:ring-blue-500 transition-colors"><option value="Aktifler">Sadece Aktif Cihazlar</option><option value="Tümü">Tüm Geçmiş</option><option value="Müşteriden Alındı">Müşteriden Alınanlar</option><option value="Servise Gönderildi">Serviste Olanlar</option><option value="Servisten Döndü">Teslim Bekleyenler</option><option value="Müşteriye Teslim Edildi">Teslim Edilenler</option></select>
+        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl border border-slate-700 outline-none text-sm font-bold bg-slate-950 text-slate-200 focus:ring-2 focus:ring-blue-500 transition-colors">
+          <option value="Aktifler">Sadece Aktif Cihazlar</option>
+          <option value="Tümü">Tüm Geçmiş</option>
+          <option value={STATUS_LABELS.RECEIVED}>Müşteriden Alınanlar</option>
+          <option value={STATUS_LABELS.SENT}>Serviste Olanlar</option>
+          <option value={STATUS_LABELS.RETURNED}>Teslim Bekleyenler</option>
+          <option value={STATUS_LABELS.DELIVERED}>Teslim Edilenler</option>
+        </select>
         <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl border border-slate-700 outline-none text-sm font-bold bg-slate-950 text-slate-200 focus:ring-2 focus:ring-blue-500 transition-colors">
           <option value="date_desc">Kabul Tarihi (Yeniden Eskiye)</option>
           <option value="date_asc">Kabul Tarihi (Eskiden Yeniye)</option>
@@ -1420,7 +1427,14 @@ function TicketListView({ tickets, onNavigate, isBulkMode, setIsBulkMode, select
       {isBulkMode && (
         <div className="bg-blue-900/20 border border-blue-800/50 rounded-2xl p-4 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2 shadow-sm">
           <div className="flex items-center gap-4 w-full sm:w-auto"><button onClick={selectAll} className="text-xs bg-slate-800 border border-blue-700 text-blue-400 px-4 py-2.5 rounded-xl font-bold shadow-sm transition-colors">Tümünü Seç</button><span className="font-black text-blue-400 text-sm">{selectedForBulk.length} Cihaz Seçili</span></div>
-          <div className="flex flex-wrap gap-2 w-full sm:w-auto"><button disabled={selectedForBulk.length === 0} onClick={() => onStatusChangeRequest('Servise Gönderildi', selectedForBulk)} className="flex-1 sm:flex-none text-xs bg-orange-500 text-white px-5 py-3 rounded-xl shadow-md font-bold disabled:opacity-50 flex items-center justify-center gap-2"><Truck size={16}/> Servise Gönder</button><button disabled={selectedForBulk.length === 0} onClick={() => onStatusChangeRequest('Servisten Döndü', selectedForBulk)} className="flex-1 sm:flex-none text-xs bg-blue-600 text-white px-5 py-3 rounded-xl shadow-md font-bold disabled:opacity-50 flex items-center justify-center gap-2"><CheckCircle size={16}/> Servisten Al</button></div>
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+            <button disabled={selectedForBulk.length === 0} onClick={() => onStatusChangeRequest(STATUS_LABELS.SENT, selectedForBulk)} className="flex-1 sm:flex-none text-xs bg-orange-500 text-white px-5 py-3 rounded-xl shadow-md font-bold disabled:opacity-50 flex items-center justify-center gap-2">
+              <Truck size={16}/> Servise Gönder
+            </button>
+            <button disabled={selectedForBulk.length === 0} onClick={() => onStatusChangeRequest(STATUS_LABELS.RETURNED, selectedForBulk)} className="flex-1 sm:flex-none text-xs bg-blue-600 text-white px-5 py-3 rounded-xl shadow-md font-bold disabled:opacity-50 flex items-center justify-center gap-2">
+              <CheckCircle size={16}/> Servisten Al
+            </button>
+          </div>
         </div>
       )}
 

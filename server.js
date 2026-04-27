@@ -53,29 +53,29 @@ const initDb = async () => {
             );
         `);
         
-        // --- DATA MIGRATION: Eskiden kalan statü isimlerini güncelle ---
-        // Servise Gönderildi -> Servis İşlemi Başladı
-        // Servisten Döndü -> Servis İşlemi Bitti
+        // --- DATA MIGRATION: Geriye Dönük Uyumluluk ---
+        // Servis İşlemi Başladı -> Servise Gönderildi
+        // Servis İşlemi Bitti -> Servisten Döndü
         await pool.query(`
             UPDATE docs 
-            SET data = data || '{"status": "Servis İşlemi Başladı"}'::jsonb 
-            WHERE resource = 'tickets' AND data->>'status' = 'Servise Gönderildi';
+            SET data = data || '{"status": "Servise Gönderildi"}'::jsonb 
+            WHERE resource = 'tickets' AND (data->>'status' = 'Servis İşlemi Başladı' OR data->>'status' = 'Servis İşlemi Bitti');
         `);
         await pool.query(`
             UPDATE docs 
-            SET data = data || '{"status": "Servis İşlemi Bitti"}'::jsonb 
-            WHERE resource = 'tickets' AND data->>'status' = 'Servisten Döndü';
+            SET data = data || '{"status": "Servisten Döndü"}'::jsonb 
+            WHERE resource = 'tickets' AND data->>'status' = 'Servis İşlemi Bitti';
         `);
         // Log kayıtlarını da güncelle
         await pool.query(`
             UPDATE docs 
-            SET data = data || '{"status": "Servis İşlemi Başladı"}'::jsonb 
-            WHERE resource = 'logs' AND data->>'status' = 'Servise Gönderildi';
+            SET data = data || '{"status": "Servise Gönderildi"}'::jsonb 
+            WHERE resource = 'logs' AND data->>'status' = 'Servis İşlemi Başladı';
         `);
         await pool.query(`
             UPDATE docs 
-            SET data = data || '{"status": "Servis İşlemi Bitti"}'::jsonb 
-            WHERE resource = 'logs' AND data->>'status' = 'Servisten Döndü';
+            SET data = data || '{"status": "Servisten Döndü"}'::jsonb 
+            WHERE resource = 'logs' AND data->>'status' = 'Servis İşlemi Bitti';
         `);
 
         console.log('✅ PostgreSQL tablo yapısı ve veri migrasyonu hazır.');
