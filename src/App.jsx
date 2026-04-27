@@ -3,7 +3,7 @@ import {
   Camera, Search, CheckCircle, Truck, Package, History, LogOut, 
   Users, Plus, ArrowRight, Smartphone, Wrench, X, ChevronRight,
   CheckSquare, ClipboardCheck, AlertCircle, Settings as SettingsIcon, Trash2,
-  Clock, ChevronDown, ChevronUp, Info, WifiOff, Shield, Key, Edit, Undo2, Save, RefreshCw, Download, ImagePlus, Upload, Battery, Lock, Globe, MessageCircle, Send
+  Clock, ChevronDown, ChevronUp, Info, WifiOff, Shield, Key, Edit, Undo2, Save, RefreshCw, Download, ImagePlus, Upload, Battery, Lock, Globe, MessageCircle, Send, DollarSign
 } from 'lucide-react';
 
 // --- SUNUCU (API) AYARLARI ---
