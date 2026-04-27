@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   Camera, Search, CheckCircle, Truck, Package, History, LogOut, 
   Users, Plus, ArrowRight, Smartphone, Wrench, X, ChevronRight,
@@ -2637,19 +2637,26 @@ function TicketDetailView({ ticket, allTickets, onStatusChangeRequest, onBack, c
 
 
 
-            {ticket.repairType && (
-              <div className="bg-blue-900/10 rounded-3xl overflow-hidden border border-blue-900/50 shadow-sm transition-colors">
-                <div className="bg-blue-900/20 px-6 py-3 border-b border-blue-800/30 flex justify-between items-center">
-                  <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-2"><Wrench size={14}/> Servis Sonuç Raporu</span>
-                  <div className="px-2 py-0.5 rounded bg-blue-600 text-white text-[9px] font-black uppercase">{ticket.repairType}</div>
+            {(() => {
+              const latestPublicNote = [...(ticket.notes || [])].reverse().find(n => n.type === 'public')?.text;
+              const hasResult = ticket.repairType || ticket.serviceNote || latestPublicNote;
+              
+              if (!hasResult) return null;
+
+              return (
+                <div className="bg-blue-900/10 rounded-3xl overflow-hidden border border-blue-900/50 shadow-sm transition-colors">
+                  <div className="bg-blue-900/20 px-6 py-3 border-b border-blue-800/30 flex justify-between items-center">
+                    <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-2"><Wrench size={14}/> Servis Sonuç Raporu</span>
+                    <div className="px-2 py-0.5 rounded bg-blue-600 text-white text-[9px] font-black uppercase">{ticket.repairType || 'Servis İşlemi'}</div>
+                  </div>
+                  <div className="p-6">
+                    <p className="text-sm font-medium text-slate-200 leading-relaxed italic">
+                      "{ticket.serviceNote || latestPublicNote || "İşlem detayı girilmemiş."}"
+                    </p>
+                  </div>
                 </div>
-                <div className="p-6">
-                  <p className="text-sm font-medium text-slate-200 leading-relaxed italic">
-                    "{ticket.serviceNote || "İşlem detayı girilmemiş."}"
-                  </p>
-                </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* TEKLİF VE FİNANSAL BİLGİLER - EN ALTA TAŞINDI */}
             {(ticket.techQuoteReceived || ticket.customerQuoteGiven) && (
@@ -2831,7 +2838,7 @@ function TicketDetailView({ ticket, allTickets, onStatusChangeRequest, onBack, c
                              <StatusBadge status={hist.status} repairType={hist.repairType} />
                           </div>
                           <div>
-                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Müşteri Şikayeti</span>
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Şikayet</span>
                             <p className="text-sm font-medium text-slate-200 bg-[#0f172a] p-4 rounded-xl border border-slate-800 leading-relaxed">{hist.complaint || '-'}</p>
                           </div>
                           {hist.repairType && (
@@ -3132,7 +3139,7 @@ function CustomerStatusView() {
                      <div className="space-y-4">
                         <div className="text-sm text-slate-300 font-medium bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-sm relative overflow-hidden">
                            <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
-                           <span className="text-[10px] text-blue-400 uppercase font-black tracking-widest block mb-1.5 flex items-center gap-1"><AlertCircle size={12}/> Müşteri Şikayeti</span>
+                           <span className="text-[10px] text-blue-400 uppercase font-black tracking-widest block mb-1.5 flex items-center gap-1"><AlertCircle size={12}/> Şikayet</span>
                            <div className="leading-relaxed">{ticketData[0].complaint || '-'}</div>
                         </div>
 
@@ -3152,8 +3159,7 @@ function CustomerStatusView() {
                               <div className="absolute top-0 left-0 w-1 h-full bg-emerald-400"></div>
                               <span className="text-[10px] text-emerald-400 uppercase font-black tracking-widest block mb-1.5 flex items-center gap-1"><DollarSign size={12}/> Teklif Durumu</span>
                               <div className="leading-relaxed">
-                                 {ticketData[0].customerQuoteStatus === 'Onaylandı' ? 'Teklifiniz onaylanmıştır. Onarım işlemleri devam etmektedir.' : 
-                                  ticketData[0].customerQuoteStatus === 'Reddedildi' ? 'Teklifiniz reddedilmiştir. Cihazınız iade süreci için hazırlanmaktadır.' : 
+                                  {ticketData[0].customerQuoteAccepted === 'Onaylandı' ? 'Teklifiniz onaylanmıştır. Onarım işlemleri devam etmektedir.' : ticketData[0].customerQuoteAccepted === 'Reddedildi' ? 'Teklifiniz reddedilmiştir. Cihazınız iade süreci için hazırlanmaktadır.' : 
                                   'Cihazınız için onarım teklifi iletilmiştir. Onayınız bekleniyor.'}
                               </div>
                               <div className="text-[10px] text-slate-500 mt-2 italic">Son İşlem: {formatDateTime(ticketData[0].customerQuoteResponseDate || ticketData[0].customerQuoteDate)}</div>
