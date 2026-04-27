@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+﻿import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   Camera, Search, CheckCircle, Truck, Package, History, LogOut, 
   Users, Plus, ArrowRight, Smartphone, Wrench, X, ChevronRight,
@@ -2421,7 +2421,7 @@ function TicketDetailView({ ticket, allTickets, onStatusChangeRequest, onBack, c
                        <textarea name="internalNote" value={editForm.internalNote} onChange={handleEditChange} rows="2" className="w-full px-3 py-2 rounded-xl border border-orange-900/30 bg-slate-900 text-slate-200 focus:ring-2 focus:ring-orange-500 outline-none font-medium text-sm transition-colors" placeholder="Personel için özel notlar..."></textarea>
                      </div>
                      <div>
-                       <label className="block text-xs font-bold text-slate-400 mb-1 flex items-center gap-1"><Info size={12} className="text-blue-400"/> MÜŞTERİ NOTU (Public)</label>
+                       <label className="block text-xs font-bold text-slate-400 mb-1 flex items-center gap-1"><Info size={12} className="text-blue-400"/> Not (Public)</label>
                        <textarea name="serviceNote" value={editForm.serviceNote} onChange={handleEditChange} rows="2" className="w-full px-3 py-2 rounded-xl border border-blue-900/30 bg-slate-900 text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none font-medium text-sm transition-colors" placeholder="Müşterinin sorgulama ekranında göreceği açıklama..."></textarea>
                      </div>
                   </div>
@@ -2560,7 +2560,7 @@ function TicketDetailView({ ticket, allTickets, onStatusChangeRequest, onBack, c
                                <div className={`px-6 py-3 flex justify-between items-center ${note.type === 'internal' ? 'bg-orange-900/5' : 'bg-blue-900/5'}`}>
                                  <div className="flex items-center gap-4">
                                    <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider ${note.type === 'internal' ? 'bg-orange-900/40 text-orange-400' : 'bg-blue-900/40 text-blue-400'}`}>
-                                     {note.type === 'internal' ? 'İÇ NOT' : 'MÜŞTERİ NOTU'}
+                                     {note.type === 'internal' ? 'İÇ NOT' : 'Not'}
                                    </span>
                                    <div className="flex items-center gap-2">
                                      <span className="text-xs font-black text-slate-200 uppercase tracking-tight">{note.personnel}</span>
@@ -3140,7 +3140,7 @@ function CustomerStatusView() {
                         {(ticketData[0].notes || []).filter(n => n.type === 'public').map(note => (
                            <div key={note.id} className="text-sm text-slate-300 font-medium bg-blue-900/10 p-4 rounded-xl border border-blue-900/30 shadow-sm relative overflow-hidden">
                               <div className="absolute top-0 left-0 w-1 h-full bg-blue-400"></div>
-                              <span className="text-[10px] text-blue-400 uppercase font-black tracking-widest block mb-1.5 flex items-center gap-1"><Info size={12}/> Müşteri Notu</span>
+                              <span className="text-[10px] text-blue-400 uppercase font-black tracking-widest block mb-1.5 flex items-center gap-1"><Info size={12}/> Not</span>
                               <div className="leading-relaxed">{note.text}</div>
                               <div className="text-[10px] text-slate-500 mt-2 italic">{formatDateTime(note.date)}</div>
                            </div>
@@ -3152,8 +3152,8 @@ function CustomerStatusView() {
                               <div className="absolute top-0 left-0 w-1 h-full bg-emerald-400"></div>
                               <span className="text-[10px] text-emerald-400 uppercase font-black tracking-widest block mb-1.5 flex items-center gap-1"><DollarSign size={12}/> Teklif Durumu</span>
                               <div className="leading-relaxed">
-                                 {ticketData[0].customerQuoteStatus === 'Onaylandı' ? 'Teklifiniz onaylandı, işlemler devam ediyor.' : 
-                                  ticketData[0].customerQuoteStatus === 'Reddedildi' ? 'Teklif reddedildi.' : 
+                                 {ticketData[0].customerQuoteStatus === 'Onaylandı' ? 'Teklifiniz onaylanmıştır. Onarım işlemleri devam etmektedir.' : 
+                                  ticketData[0].customerQuoteStatus === 'Reddedildi' ? 'Teklifiniz reddedilmiştir. Cihazınız iade süreci için hazırlanmaktadır.' : 
                                   'Cihazınız için onarım teklifi iletilmiştir. Onayınız bekleniyor.'}
                               </div>
                               <div className="text-[10px] text-slate-500 mt-2 italic">Son İşlem: {formatDateTime(ticketData[0].customerQuoteResponseDate || ticketData[0].customerQuoteDate)}</div>
@@ -3164,7 +3164,7 @@ function CustomerStatusView() {
                         {ticketData[0].serviceNote && (!ticketData[0].notes || ticketData[0].notes.length === 0) && (
                            <div className="text-sm text-slate-300 font-medium bg-blue-900/10 p-4 rounded-xl border border-blue-900/30 shadow-sm relative overflow-hidden">
                               <div className="absolute top-0 left-0 w-1 h-full bg-blue-400"></div>
-                              <span className="text-[10px] text-blue-400 uppercase font-black tracking-widest block mb-1.5 flex items-center gap-1"><Info size={12}/> Müşteri Notu</span>
+                              <span className="text-[10px] text-blue-400 uppercase font-black tracking-widest block mb-1.5 flex items-center gap-1"><Info size={12}/> Not</span>
                               <div className="leading-relaxed">{ticketData[0].serviceNote || '-'}</div>
                            </div>
                         )}
