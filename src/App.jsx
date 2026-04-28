@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   Camera, Search, CheckCircle, Truck, Package, History, LogOut, 
   Users, Plus, ArrowRight, Smartphone, Wrench, X, ChevronRight,
@@ -3199,15 +3199,20 @@ function CustomerStatusView() {
                                        <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-slate-800 text-slate-400 border border-slate-700">{t.status}</span>
                                     </div>
                                     <div className="text-xs text-slate-400 leading-relaxed italic border-l border-slate-700 pl-3">
-                                       <span className="text-[9px] uppercase font-black text-slate-600 block not-italic mb-0.5">Eski Şikayet:</span>
+                                       <span className="text-[9px] uppercase font-black text-slate-600 block not-italic mb-0.5">Şikayet:</span>
                                        {t.complaint}
                                     </div>
-                                    {t.serviceNote && (
-                                       <div className="mt-2 text-xs text-blue-400/70 leading-relaxed italic border-l border-blue-900/30 pl-3">
-                                          <span className="text-[9px] uppercase font-black text-blue-900 block not-italic mb-0.5">Servis İşlem Notu:</span>
-                                          {t.serviceNote}
-                                       </div>
-                                    )}
+                                    {(() => {
+                                       const latestNote = [...(t.notes || [])].reverse().find(n => n.type === 'public')?.text;
+                                       const noteToShow = t.serviceNote || latestNote;
+                                       if (!noteToShow) return null;
+                                       return (
+                                          <div className="mt-2 text-xs text-blue-400/70 leading-relaxed italic border-l border-blue-900/30 pl-3">
+                                             <span className="text-[9px] uppercase font-black text-blue-900 block not-italic mb-0.5">Servis Sonuç Raporu:</span>
+                                             {noteToShow}
+                                          </div>
+                                       );
+                                    })()}
                                  </div>
                               ))}
                            </div>
