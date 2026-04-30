@@ -2568,47 +2568,93 @@ function TicketDetailView({ ticket, allTickets, onStatusChangeRequest, onBack, c
                            </div>
                         ) : (
                            [...(ticket.notes || [])].reverse().map(note => (
-                             <div key={note.id} className={`bg-slate-900 rounded-[2rem] border ${note.type === 'internal' ? 'border-orange-900/20 hover:border-orange-900/40' : note.type === 'result' ? 'border-indigo-900/20 hover:border-indigo-900/40' : 'border-blue-900/20 hover:border-blue-900/40'} overflow-hidden transition-all shadow-lg group`}>
-                               <div className={`px-6 py-3 flex justify-between items-center ${note.type === 'internal' ? 'bg-orange-900/5' : note.type === 'result' ? 'bg-indigo-900/5' : 'bg-blue-900/5'}`}>
-                                 <div className="flex items-center gap-4">
-                                   <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider ${note.type === 'internal' ? 'bg-orange-900/40 text-orange-400' : note.type === 'result' ? 'bg-indigo-900/40 text-indigo-400' : 'bg-blue-900/40 text-blue-400'}`}>
-                                     {note.type === 'internal' ? 'İÇ NOT' : note.type === 'result' ? 'SERVİS SONUÇ RAPORU' : 'Not'}
-                                   </span>
-                                   <div className="flex items-center gap-2">
-                                     <span className="text-xs font-black text-slate-200 uppercase tracking-tight">{note.personnel}</span>
-                                     <span className="text-[10px] font-bold text-slate-600 border-l border-slate-800 pl-2">{formatDateTime(note.date)}</span>
-                                   </div>
-                                 </div>
-                                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                   <button onClick={() => { setEditingNoteId(note.id); setInlineNoteValue(note.text); }} className="p-2 text-slate-500 hover:text-white hover:bg-slate-800 rounded-lg transition-all"><Edit size={16}/></button>
-                                   <button onClick={() => handleDeleteNote(note.id)} className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-all"><Trash2 size={16}/></button>
-                                 </div>
-                               </div>
-                               <div className="p-6">
-                                 {editingNoteId === note.id ? (
-                                   <div className="space-y-4">
-                                     <textarea 
-                                       autoFocus 
-                                       value={inlineNoteValue} 
-                                       onChange={e => setInlineNoteValue(e.target.value)} 
-                                       className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-sm text-slate-200 outline-none focus:ring-2 focus:ring-blue-500 font-medium transition-all"
-                                       rows="3"
-                                     />
-                                     <div className="flex justify-end gap-3">
-                                       <button onClick={() => setEditingNoteId(null)} className="px-4 py-2 text-xs text-slate-500 font-bold hover:text-slate-300 transition-colors">İPTAL</button>
-                                       <button onClick={() => handleUpdateNote(note.id, inlineNoteValue)} className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black shadow-lg shadow-blue-900/20 transition-all active:scale-95">GÜNCELLE</button>
+                             note.type === 'result' ? (
+                               <div key={note.id} className="bg-blue-900/10 rounded-3xl overflow-hidden border border-blue-900/50 shadow-sm transition-colors group relative">
+                                 <div className="bg-blue-900/20 px-6 py-3 border-b border-blue-800/30 flex justify-between items-center">
+                                   <div className="flex items-center gap-4">
+                                     <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-2"><Wrench size={14}/> Servis Sonuç Raporu</span>
+                                     <div className="flex items-center gap-2 border-l border-blue-800/50 pl-4">
+                                       <span className="text-xs font-black text-slate-300 uppercase tracking-tight">{note.personnel}</span>
+                                       <span className="text-[10px] font-bold text-slate-500 border-l border-slate-700 pl-2">{formatDateTime(note.date)}</span>
                                      </div>
                                    </div>
-                                 ) : (
-                                   <p className="text-base font-medium text-slate-300 leading-relaxed whitespace-pre-wrap">{note.text}</p>
-                                 )}
-                                 {note.lastUpdate && (
-                                   <div className="mt-4 pt-3 border-t border-slate-800/50 flex items-center gap-2 text-[9px] text-slate-600 font-bold uppercase tracking-widest">
-                                     <Clock size={10} /> SON GÜNCELLEME: {formatDateTime(note.lastUpdate)}
+                                   <div className="flex items-center gap-3">
+                                     <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                       <button onClick={() => { setEditingNoteId(note.id); setInlineNoteValue(note.text); }} className="p-1.5 text-blue-400 hover:text-white hover:bg-blue-800/50 rounded-lg transition-all"><Edit size={14}/></button>
+                                       <button onClick={() => handleDeleteNote(note.id)} className="p-1.5 text-blue-400 hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-all"><Trash2 size={14}/></button>
+                                     </div>
+                                     <div className="px-2 py-0.5 rounded bg-blue-600 text-white text-[9px] font-black uppercase">{ticket.repairType || 'Servis İşlemi'}</div>
                                    </div>
-                                 )}
+                                 </div>
+                                 <div className="p-6">
+                                   {editingNoteId === note.id ? (
+                                     <div className="space-y-4">
+                                       <textarea 
+                                         autoFocus 
+                                         value={inlineNoteValue} 
+                                         onChange={e => setInlineNoteValue(e.target.value)} 
+                                         className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-sm text-slate-200 outline-none focus:ring-2 focus:ring-blue-500 font-medium transition-all"
+                                         rows="3"
+                                       />
+                                       <div className="flex justify-end gap-3">
+                                         <button onClick={() => setEditingNoteId(null)} className="px-4 py-2 text-xs text-slate-500 font-bold hover:text-slate-300 transition-colors">İPTAL</button>
+                                         <button onClick={() => handleUpdateNote(note.id, inlineNoteValue)} className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black shadow-lg shadow-blue-900/20 transition-all active:scale-95">GÜNCELLE</button>
+                                       </div>
+                                     </div>
+                                   ) : (
+                                     <p className="text-sm font-medium text-slate-200 leading-relaxed italic whitespace-pre-wrap">"{note.text}"</p>
+                                   )}
+                                   {note.lastUpdate && (
+                                     <div className="mt-4 pt-3 border-t border-blue-900/30 flex items-center gap-2 text-[9px] text-blue-400/50 font-bold uppercase tracking-widest">
+                                       <Clock size={10} /> SON GÜNCELLEME: {formatDateTime(note.lastUpdate)}
+                                     </div>
+                                   )}
+                                 </div>
                                </div>
-                             </div>
+                             ) : (
+                               <div key={note.id} className={`bg-slate-900 rounded-[2rem] border ${note.type === 'internal' ? 'border-orange-900/20 hover:border-orange-900/40' : 'border-blue-900/20 hover:border-blue-900/40'} overflow-hidden transition-all shadow-lg group`}>
+                                 <div className={`px-6 py-3 flex justify-between items-center ${note.type === 'internal' ? 'bg-orange-900/5' : 'bg-blue-900/5'}`}>
+                                   <div className="flex items-center gap-4">
+                                     <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider ${note.type === 'internal' ? 'bg-orange-900/40 text-orange-400' : 'bg-blue-900/40 text-blue-400'}`}>
+                                       {note.type === 'internal' ? 'İÇ NOT' : 'Not'}
+                                     </span>
+                                     <div className="flex items-center gap-2">
+                                       <span className="text-xs font-black text-slate-200 uppercase tracking-tight">{note.personnel}</span>
+                                       <span className="text-[10px] font-bold text-slate-600 border-l border-slate-800 pl-2">{formatDateTime(note.date)}</span>
+                                     </div>
+                                   </div>
+                                   <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                     <button onClick={() => { setEditingNoteId(note.id); setInlineNoteValue(note.text); }} className="p-2 text-slate-500 hover:text-white hover:bg-slate-800 rounded-lg transition-all"><Edit size={16}/></button>
+                                     <button onClick={() => handleDeleteNote(note.id)} className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-all"><Trash2 size={16}/></button>
+                                   </div>
+                                 </div>
+                                 <div className="p-6">
+                                   {editingNoteId === note.id ? (
+                                     <div className="space-y-4">
+                                       <textarea 
+                                         autoFocus 
+                                         value={inlineNoteValue} 
+                                         onChange={e => setInlineNoteValue(e.target.value)} 
+                                         className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-sm text-slate-200 outline-none focus:ring-2 focus:ring-blue-500 font-medium transition-all"
+                                         rows="3"
+                                       />
+                                       <div className="flex justify-end gap-3">
+                                         <button onClick={() => setEditingNoteId(null)} className="px-4 py-2 text-xs text-slate-500 font-bold hover:text-slate-300 transition-colors">İPTAL</button>
+                                         <button onClick={() => handleUpdateNote(note.id, inlineNoteValue)} className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black shadow-lg shadow-blue-900/20 transition-all active:scale-95">GÜNCELLE</button>
+                                       </div>
+                                     </div>
+                                   ) : (
+                                     <p className="text-base font-medium text-slate-300 leading-relaxed whitespace-pre-wrap">{note.text}</p>
+                                   )}
+                                   {note.lastUpdate && (
+                                     <div className="mt-4 pt-3 border-t border-slate-800/50 flex items-center gap-2 text-[9px] text-slate-600 font-bold uppercase tracking-widest">
+                                       <Clock size={10} /> SON GÜNCELLEME: {formatDateTime(note.lastUpdate)}
+                                     </div>
+                                   )}
+                                 </div>
+                               </div>
+                             )
+
                            ))
                         )}
                       </div>
