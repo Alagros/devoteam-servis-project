@@ -522,7 +522,7 @@ export default function App() {
           newNotes.push({
             id: Date.now() + Math.random(),
             text: extra.serviceNote,
-            type: 'public',
+            type: 'result',
             personnel: user.displayName,
             date: now
           });
@@ -2061,8 +2061,8 @@ function TicketDetailView({ ticket, allTickets, onStatusChangeRequest, onBack, c
     // MIGRATION: Eğer yeni notes dizisi yoksa ama eski notlar varsa taşı
     if (!ticket.notes && (ticket.internalNote || ticket.serviceNote)) {
        const initialNotes = [];
-       if (ticket.internalNote) initialNotes.push({ id: Date.now() + 1, text: ticket.internalNote, type: 'internal', personnel: ticket.personnel || 'Sistem', date: ticket.dateReceived || new Date().toISOString() });
-       if (ticket.serviceNote) initialNotes.push({ id: Date.now() + 2, text: ticket.serviceNote, type: 'public', personnel: ticket.personnel || 'Sistem', date: ticket.dateReceived || new Date().toISOString() });
+       if (ticket.internalNote) initialNotes.push({ id: Date.now() + 1, text: ticket.internalNote, type: 'internal', personnel: ticket.lastPersonnel || ticket.personnel || 'Sistem', date: ticket.dateReceived || new Date().toISOString() });
+       if (ticket.serviceNote) initialNotes.push({ id: Date.now() + 2, text: ticket.serviceNote, type: 'result', personnel: ticket.personnelReturned || ticket.lastPersonnel || ticket.personnel || 'Sistem', date: ticket.dateReturned || ticket.dateReceived || new Date().toISOString() });
        onUpdateTicket(ticket.id, { notes: initialNotes, internalNote: null, serviceNote: null });
     }
   }, [ticket, isEditing]);
@@ -2568,11 +2568,11 @@ function TicketDetailView({ ticket, allTickets, onStatusChangeRequest, onBack, c
                            </div>
                         ) : (
                            [...(ticket.notes || [])].reverse().map(note => (
-                             <div key={note.id} className={`bg-slate-900 rounded-[2rem] border ${note.type === 'internal' ? 'border-orange-900/20 hover:border-orange-900/40' : 'border-blue-900/20 hover:border-blue-900/40'} overflow-hidden transition-all shadow-lg group`}>
-                               <div className={`px-6 py-3 flex justify-between items-center ${note.type === 'internal' ? 'bg-orange-900/5' : 'bg-blue-900/5'}`}>
+                             <div key={note.id} className={`bg-slate-900 rounded-[2rem] border ${note.type === 'internal' ? 'border-orange-900/20 hover:border-orange-900/40' : note.type === 'result' ? 'border-indigo-900/20 hover:border-indigo-900/40' : 'border-blue-900/20 hover:border-blue-900/40'} overflow-hidden transition-all shadow-lg group`}>
+                               <div className={`px-6 py-3 flex justify-between items-center ${note.type === 'internal' ? 'bg-orange-900/5' : note.type === 'result' ? 'bg-indigo-900/5' : 'bg-blue-900/5'}`}>
                                  <div className="flex items-center gap-4">
-                                   <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider ${note.type === 'internal' ? 'bg-orange-900/40 text-orange-400' : 'bg-blue-900/40 text-blue-400'}`}>
-                                     {note.type === 'internal' ? 'İÇ NOT' : 'Not'}
+                                   <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider ${note.type === 'internal' ? 'bg-orange-900/40 text-orange-400' : note.type === 'result' ? 'bg-indigo-900/40 text-indigo-400' : 'bg-blue-900/40 text-blue-400'}`}>
+                                     {note.type === 'internal' ? 'İÇ NOT' : note.type === 'result' ? 'SERVİS SONUÇ RAPORU' : 'Not'}
                                    </span>
                                    <div className="flex items-center gap-2">
                                      <span className="text-xs font-black text-slate-200 uppercase tracking-tight">{note.personnel}</span>
@@ -2649,26 +2649,7 @@ function TicketDetailView({ ticket, allTickets, onStatusChangeRequest, onBack, c
 
 
 
-            {(() => {
-              const latestPublicNote = [...(ticket.notes || [])].reverse().find(n => n.type === 'public')?.text;
-              const hasResult = ticket.repairType || ticket.serviceNote || latestPublicNote;
-              
-              if (!hasResult) return null;
 
-              return (
-                <div className="bg-blue-900/10 rounded-3xl overflow-hidden border border-blue-900/50 shadow-sm transition-colors">
-                  <div className="bg-blue-900/20 px-6 py-3 border-b border-blue-800/30 flex justify-between items-center">
-                    <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-2"><Wrench size={14}/> Servis Sonuç Raporu</span>
-                    <div className="px-2 py-0.5 rounded bg-blue-600 text-white text-[9px] font-black uppercase">{ticket.repairType || 'Servis İşlemi'}</div>
-                  </div>
-                  <div className="p-6">
-                    <p className="text-sm font-medium text-slate-200 leading-relaxed italic">
-                      "{ticket.serviceNote || latestPublicNote || "İşlem detayı girilmemiş."}"
-                    </p>
-                  </div>
-                </div>
-              );
-            })()}
 
             {/* TEKLİF VE FİNANSAL BİLGİLER - EN ALTA TAŞINDI */}
             {(ticket.techQuoteReceived || ticket.customerQuoteGiven) && (
@@ -3155,11 +3136,13 @@ function CustomerStatusView() {
                            <div className="leading-relaxed">{ticketData[0].complaint || '-'}</div>
                         </div>
 
-                        {/* Müşteri Notları (Yeni Sistem) */}
-                        {(ticketData[0].notes || []).filter(n => n.type === 'public').map(note => (
-                           <div key={note.id} className="text-sm text-slate-300 font-medium bg-blue-900/10 p-4 rounded-xl border border-blue-900/30 shadow-sm relative overflow-hidden">
-                              <div className="absolute top-0 left-0 w-1 h-full bg-blue-400"></div>
-                              <span className="text-[10px] text-blue-400 uppercase font-black tracking-widest block mb-1.5 flex items-center gap-1"><Info size={12}/> Not</span>
+                        {/* Müşteri Notları ve Sonuç Raporları */}
+                        {(ticketData[0].notes || []).filter(n => n.type === 'public' || n.type === 'result').map(note => (
+                           <div key={note.id} className={`text-sm text-slate-300 font-medium ${note.type === 'result' ? 'bg-indigo-900/10 border-indigo-900/30' : 'bg-blue-900/10 border-blue-900/30'} p-4 rounded-xl border shadow-sm relative overflow-hidden`}>
+                              <div className={`absolute top-0 left-0 w-1 h-full ${note.type === 'result' ? 'bg-indigo-500' : 'bg-blue-400'}`}></div>
+                              <span className={`text-[10px] ${note.type === 'result' ? 'text-indigo-400' : 'text-blue-400'} uppercase font-black tracking-widest block mb-1.5 flex items-center gap-1`}>
+                                 {note.type === 'result' ? <><Wrench size={12}/> Servis Sonuç Raporu</> : <><Info size={12}/> Not</>}
+                              </span>
                               <div className="leading-relaxed">{note.text}</div>
                               <div className="text-[10px] text-slate-500 mt-2 italic">{formatDateTime(note.date)}</div>
                            </div>
@@ -3215,7 +3198,7 @@ function CustomerStatusView() {
                                        {t.complaint}
                                     </div>
                                     {(() => {
-                                       const latestNote = [...(t.notes || [])].reverse().find(n => n.type === 'public')?.text;
+                                       const latestNote = [...(t.notes || [])].reverse().find(n => n.type === 'public' || n.type === 'result')?.text;
                                        const noteToShow = t.serviceNote || latestNote;
                                        if (!noteToShow) return null;
                                        return (
