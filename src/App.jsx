@@ -516,7 +516,19 @@ export default function App() {
     setTickets(prev => prev.map(t => {
       if (itemIds.includes(String(t.id))) {
         const extra = extraDataPerId[t.id] || {};
-        const updated = { ...t, status: newStatus, ...extra, lastPersonnel: user.displayName };
+        
+        let newNotes = [...(t.notes || [])];
+        if (extra.serviceNote && extra.serviceNote.trim() !== '') {
+          newNotes.push({
+            id: Date.now() + Math.random(),
+            text: extra.serviceNote,
+            type: 'public',
+            personnel: user.displayName,
+            date: now
+          });
+        }
+
+        const updated = { ...t, status: newStatus, ...extra, notes: newNotes, lastPersonnel: user.displayName };
         if (newStatus === STATUS_LABELS.SENT && !t.dateSent) { updated.dateSent = now; updated.personnelSent = user.displayName; }
         if (newStatus === STATUS_LABELS.RETURNED && !t.dateReturned) { updated.dateReturned = now; updated.personnelReturned = user.displayName; }
         if (newStatus === STATUS_LABELS.DELIVERED && !t.dateDelivered) { updated.dateDelivered = now; updated.personnelDelivered = user.displayName; }
