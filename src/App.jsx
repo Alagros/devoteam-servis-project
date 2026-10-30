@@ -26,6 +26,41 @@ const apiFetch = (url, options = {}) => {
 };
 
 // --- YARDIMCI FONKSİYONLAR ---
+// Model adını temizleme (parantez, gereksiz ekler ve tireleri siler: örn. "ThinkPad T14 Gen 6 (Type 21QJ) Laptop" -> "T14 Gen 6")
+const cleanModelName = (raw) => {
+  if (!raw) return '';
+  // 1. İlk parantez ve sonrasını tamamen kes
+  let name = String(raw).split('(')[0];
+  // 2. Marka ve seri öneklerini temizle
+  name = name.replace(/^(Lenovo\s+)?(ThinkPad\s+|ThinkCentre\s+|IdeaPad\s+|ThinkBook\s+)?/i, '');
+  // 3. Sondaki gereksiz kelimeleri ve tireleri temizle
+  name = name.replace(/[\s\-_]*(Laptops?|Notebooks?|Desktops?|Towers?|Type)\s*$/gi, '');
+  name = name.replace(/[\s\-_]+$/g, '');
+  // 4. "Gen6" -> "Gen 6"
+  name = name.replace(/Gen\s*(\d+)/gi, 'Gen $1');
+  // 5. Boşlukları temizle
+  name = name.replace(/\s+/g, ' ').trim();
+  return name;
+};
+
+// Modelleri karşılaştırmak için normalizasyon anahtarı ("T14 Gen 6" ve "T14 Gen6" aynı kabul edilir)
+const normalizeModelKey = (str) => cleanModelName(str).toLowerCase().replace(/[^a-z0-9]/g, '');
+
+// Modelleri tekilleştirip alfanümerik (E serisi, T serisi, X serisi, Yoga...) sıralayan fonksiyon
+const sortModels = (modelList) => {
+  if (!Array.isArray(modelList)) return [];
+  const seen = new Set();
+  const cleaned = [];
+  for (const m of modelList) {
+    if (!m) continue;
+    const clean = cleanModelName(m);
+    const key = normalizeModelKey(clean);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    cleaned.push(clean);
+  }
+  return cleaned.sort((a, b) => a.localeCompare(b, 'tr', { numeric: true, sensitivity: 'base' }));
+};
 const calculateRemainingDays = (endDate) => {
   if (!endDate) return 0;
   const end = new Date(endDate);
@@ -244,7 +279,13 @@ export default function App() {
       if (res.ok) {
         const data = await res.json();
         if(data.customers) setCustomers(data.customers);
-        if(data.brandsModels && Object.keys(data.brandsModels).length > 0) setBrandsModels(data.brandsModels);
+        if(data.brandsModels && Object.keys(data.brandsModels).length > 0) {
+          const cleanedBrands = {};
+          for (const [b, models] of Object.entries(data.brandsModels)) {
+            cleanedBrands[b] = sortModels(models);
+          }
+          setBrandsModels(cleanedBrands);
+        }
         if(data.rootBackdoorEnabled !== undefined) setRootBackdoorEnabled(data.rootBackdoorEnabled);
       }
     } catch (e) { console.error("Ayarlar çekilemedi:", e); }
@@ -378,7 +419,15 @@ export default function App() {
   };
 
   const handleUpdateCustomers = (newC) => { setCustomers(newC); saveSettingsToDb(newC, brandsModels); showToast('Müşteri listesi başarıyla güncellendi!'); };
-  const handleUpdateBrands = (newB) => { setBrandsModels(newB); saveSettingsToDb(customers, newB); showToast('Marka/Model listesi başarıyla güncellendi!'); };
+  const handleUpdateBrands = (newB) => {
+    const cleanedBrands = {};
+    for (const [b, models] of Object.entries(newB || {})) {
+      cleanedBrands[b] = sortModels(models);
+    }
+    setBrandsModels(cleanedBrands);
+    saveSettingsToDb(customers, cleanedBrands);
+    showToast('Marka/Model listesi başarıyla güncellendi!');
+  };
   const handleLogout = () => { localStorage.removeItem('tech_servis_user'); sessionStorage.removeItem('tech_servis_view'); sessionStorage.removeItem('tech_servis_ticket'); setUser(null); };
 
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
@@ -886,11 +935,17 @@ function SettingsView({ customers, setCustomers, brandsModels, setBrandsModels, 
   const handleAddModel = (e) => {
     e.preventDefault();
     if (!newModel.trim() || !selectedBrand) return;
-    if (!brandsModels[selectedBrand].includes(newModel.trim())) {
-      const updated = { ...brandsModels, [selectedBrand]: [...brandsModels[selectedBrand], newModel.trim()] };
+    const clean = cleanModelName(newModel.trim());
+    const key = normalizeModelKey(clean);
+    const currentList = brandsModels[selectedBrand] || [];
+    if (!currentList.some(m => normalizeModelKey(m) === key)) {
+      const updatedList = sortModels([...currentList, clean]);
+      const updated = { ...brandsModels, [selectedBrand]: updatedList };
       setBrandsModels(updated);
       saveSettingsToDb(customers, updated);
       showToast('Model eklendi!');
+    } else {
+      showToast('Bu model zaten listede mevcut!', 'error');
     }
     setNewModel('');
   };
@@ -952,7 +1007,7 @@ function SettingsView({ customers, setCustomers, brandsModels, setBrandsModels, 
                   </form>
                 )}
                 <div className="space-y-2 max-h-[150px] overflow-y-auto pr-1 mt-3 border-t border-slate-700 pt-3">
-                  {brandsModels[selectedBrand]?.map((m, idx) => (
+                  {sortModels(brandsModels[selectedBrand])?.map((m, idx) => (
                     <div key={idx} className="flex justify-between items-center bg-slate-900 p-2.5 rounded-lg border border-slate-800 shadow-sm">
                       <span className="text-sm font-medium text-slate-200">{m}</span>
                       {canManageBrands && <button onClick={() => handleRemoveModel(m)} className="text-slate-500 hover:text-red-500 bg-slate-800 border border-slate-700 rounded-md p-1"><X size={16} /></button>}
@@ -1575,27 +1630,35 @@ function NewTicketView({ allTickets, onSave, user, onCancel, customers, brandsMo
         if (data.success && data.warranty) {
           const w = data.warranty;
           const fullName = w.productName || '';
-          let matchedModel = '';
-          const lenovoModels = brandsModels['Lenovo'] || [];
-          for (const m of lenovoModels) {
-            if (fullName.toLowerCase().includes(m.toLowerCase())) {
-              matchedModel = m;
-              break;
-            }
-          }
+          const targetClean = cleanModelName(fullName);
+          const targetKey = normalizeModelKey(targetClean);
 
-          setSnLookupState({ loading: false, result: { productName: fullName, brand: 'Lenovo', model: matchedModel, warranty: w }, error: null });
+          const lenovoModels = brandsModels['Lenovo'] || [];
+          
+          // Listede bu model zaten var mı (normalizasyon ile kontrol et)
+          const matchedModel = lenovoModels.find(m => normalizeModelKey(m) === targetKey);
+
+          setSnLookupState({ 
+            loading: false, 
+            result: { 
+              productName: fullName, 
+              cleanModel: targetClean, 
+              brand: 'Lenovo', 
+              model: matchedModel || targetClean, 
+              warranty: w 
+            }, 
+            error: null 
+          });
 
           if (Object.keys(brandsModels).includes('Lenovo')) {
             if (matchedModel) {
+              // Model zaten listede var: Kesinlikle sorma, doğrudan seç!
               setFormData(prev => ({ ...prev, brand: 'Lenovo', model: matchedModel }));
-            } else {
-              let shortModel = fullName.replace(/^(Lenovo\s+)?(ThinkPad\s+)?/i, '').replace(/\s+Type\s+.*$/i, '').replace(/\s+/g, ' ').trim();
-              shortModel = shortModel.replace(/Gen\s+(\d)/gi, 'Gen$1');
-              if (shortModel) {
-                setFormData(prev => ({ ...prev, brand: 'Lenovo' }));
-                setModelAddPrompt({ brand: 'Lenovo', model: shortModel });
-              }
+              setModelAddPrompt(null);
+            } else if (targetClean) {
+              // Model listede yok: Temiz kısa adı sor ("T14 Gen 6" gibi)
+              setFormData(prev => ({ ...prev, brand: 'Lenovo' }));
+              setModelAddPrompt({ brand: 'Lenovo', model: targetClean });
             }
           }
         } else {
@@ -1606,12 +1669,14 @@ function NewTicketView({ allTickets, onSave, user, onCancel, customers, brandsMo
       }
     };
     doLookup();
-  }, [formData.serialNumber, autoCheckEnabled]);
+  }, [formData.serialNumber, autoCheckEnabled, brandsModels]);
 
   const handleAddModelFromPrompt = () => {
     if (!modelAddPrompt) return;
     const { brand, model } = modelAddPrompt;
-    const updated = { ...brandsModels, [brand]: [...(brandsModels[brand] || []), model] };
+    const existingList = brandsModels[brand] || [];
+    const updatedList = sortModels([...existingList, model]);
+    const updated = { ...brandsModels, [brand]: updatedList };
     if (onUpdateBrandsModels) onUpdateBrandsModels(updated);
     setFormData(prev => ({ ...prev, brand, model }));
     setModelAddPrompt(null);
@@ -1767,7 +1832,7 @@ function NewTicketView({ allTickets, onSave, user, onCancel, customers, brandsMo
             {/* Marka / Model - Altta */}
             <div className="grid grid-cols-2 gap-4">
               <div><label className="block text-sm font-black text-slate-400 mb-2">Marka</label><select name="brand" value={formData.brand} onChange={handleChange} className="w-full px-4 py-3.5 rounded-2xl border border-slate-700 bg-slate-950 text-slate-100 outline-none font-bold shadow-sm">{Object.keys(brandsModels).map(b => <option key={b} value={b}>{b}</option>)}</select></div>
-              <div><label className="block text-sm font-black text-slate-400 mb-2">Model</label><select name="model" value={formData.model} onChange={handleChange} className="w-full px-4 py-3.5 rounded-2xl border border-slate-700 bg-slate-950 text-slate-100 outline-none font-bold shadow-sm">{formData.brand && brandsModels[formData.brand] ? brandsModels[formData.brand].map(m => <option key={m} value={m}>{m}</option>) : <option value="" disabled>Model yok</option>}</select></div>
+              <div><label className="block text-sm font-black text-slate-400 mb-2">Model</label><select name="model" value={formData.model} onChange={handleChange} className="w-full px-4 py-3.5 rounded-2xl border border-slate-700 bg-slate-950 text-slate-100 outline-none font-bold shadow-sm">{formData.brand && brandsModels[formData.brand] ? sortModels(brandsModels[formData.brand]).map(m => <option key={m} value={m}>{m}</option>) : <option value="" disabled>Model yok</option>}</select></div>
             </div>
             <div><label className="block text-sm font-black text-slate-400 mb-2 flex justify-between"><span>Şikayet / Not</span><span className="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded-md">Opsiyonel</span></label><textarea name="complaint" value={formData.complaint} onChange={handleChange} rows="2" className="w-full px-4 py-3.5 rounded-2xl border border-slate-700 bg-slate-950 text-slate-100 outline-none font-medium shadow-sm" placeholder="Varsa şikayeti detaylı yazın..."></textarea></div>
 
