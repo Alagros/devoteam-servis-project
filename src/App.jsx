@@ -646,7 +646,7 @@ export default function App() {
                showToast(`Root erişimi ${val ? 'aktif edildi' : 'kapatıldı'}.`);
             }} />}
             {currentView === 'list' && <TicketListView tickets={tickets} onNavigate={handleNavigate} isBulkMode={isBulkMode} setIsBulkMode={setIsBulkMode} selectedForBulk={selectedForBulk} setSelectedForBulk={setSelectedForBulk} onStatusChangeRequest={handleStatusChangeRequest} customers={customers} brandsModels={brandsModels} listFilters={listFilters} currentTime={currentTime} showToast={showToast} />}
-            {currentView === 'new' && <NewTicketView allTickets={tickets} onSave={addTickets} user={user} onCancel={() => handleNavigate('list')} customers={customers} brandsModels={brandsModels} currentTime={currentTime} showToast={showToast} onCloseUnfinishedTicket={handleCloseUnfinishedTicket} />}
+            {currentView === 'new' && <NewTicketView allTickets={tickets} onSave={addTickets} user={user} onCancel={() => handleNavigate('list')} customers={customers} brandsModels={brandsModels} onUpdateBrandsModels={handleUpdateBrands} currentTime={currentTime} showToast={showToast} onCloseUnfinishedTicket={handleCloseUnfinishedTicket} />}
             {currentView === 'fastReturn' && <FastReturnView availableTickets={tickets.filter(t => t.status === 'Servis İşlemleri Başlatıldı' || t.status === 'Müşteriden Alındı')} onSave={processFastReturns} onCancel={() => handleNavigate('list')} customers={customers} showToast={showToast} />}
             {currentView === 'detail' && selectedTicket && <TicketDetailView ticket={selectedTicket} allTickets={tickets} onStatusChangeRequest={handleStatusChangeRequest} onBack={() => handleNavigate('list')} currentTime={currentTime} user={user} customers={customers} brandsModels={brandsModels} onUpdateTicket={handleUpdateTicket} onDeleteTicket={handleDeleteTicketComplete} showToast={showToast} />}
           </main>
@@ -1542,7 +1542,7 @@ function TicketListView({ tickets, onNavigate, isBulkMode, setIsBulkMode, select
   );
 }
 
-function NewTicketView({ allTickets, onSave, user, onCancel, customers, brandsModels, currentTime, showToast, onCloseUnfinishedTicket }) {
+function NewTicketView({ allTickets, onSave, user, onCancel, customers, brandsModels, onUpdateBrandsModels, currentTime, showToast, onCloseUnfinishedTicket }) {
   const [pendingTickets, setPendingTickets] = useState([]);
   const [historyModalInfo, setHistoryModalInfo] = useState(null);
   const [unfinishedTicket, setUnfinishedTicket] = useState(null);
@@ -1553,6 +1553,70 @@ function NewTicketView({ allTickets, onSave, user, onCancel, customers, brandsMo
   const defaultModel = defaultBrand && brandsModels[defaultBrand] && brandsModels[defaultBrand].length > 0 ? brandsModels[defaultBrand][0] : '';
   const [formData, setFormData] = useState({ serialNumber: '', customer: defaultCustomer, brand: defaultBrand, model: defaultModel, complaint: '' });
   const [photos, setPhotos] = useState([]);
+
+  // --- OTOMATİK SERİ NUMARASI KONTROL ---
+  const [autoCheckEnabled, setAutoCheckEnabled] = useState(true);
+  const [snLookupState, setSnLookupState] = useState({ loading: false, result: null, error: null });
+  const [modelAddPrompt, setModelAddPrompt] = useState(null);
+  const lastCheckedSn = useRef('');
+
+  useEffect(() => {
+    if (!autoCheckEnabled) return;
+    const sn = formData.serialNumber.trim().toUpperCase();
+    if (sn.length < 8 || sn === lastCheckedSn.current) return;
+    lastCheckedSn.current = sn;
+
+    const doLookup = async () => {
+      setSnLookupState({ loading: true, result: null, error: null });
+      setModelAddPrompt(null);
+      try {
+        const res = await apiFetch(`${API_URL}/warranty/lenovo/${sn}`);
+        const data = await res.json();
+        if (data.success && data.warranty) {
+          const w = data.warranty;
+          const fullName = w.productName || '';
+          let matchedModel = '';
+          const lenovoModels = brandsModels['Lenovo'] || [];
+          for (const m of lenovoModels) {
+            if (fullName.toLowerCase().includes(m.toLowerCase())) {
+              matchedModel = m;
+              break;
+            }
+          }
+
+          setSnLookupState({ loading: false, result: { productName: fullName, brand: 'Lenovo', model: matchedModel, warranty: w }, error: null });
+
+          if (Object.keys(brandsModels).includes('Lenovo')) {
+            if (matchedModel) {
+              setFormData(prev => ({ ...prev, brand: 'Lenovo', model: matchedModel }));
+            } else {
+              let shortModel = fullName.replace(/^(Lenovo\s+)?(ThinkPad\s+)?/i, '').replace(/\s+Type\s+.*$/i, '').replace(/\s+/g, ' ').trim();
+              shortModel = shortModel.replace(/Gen\s+(\d)/gi, 'Gen$1');
+              if (shortModel) {
+                setFormData(prev => ({ ...prev, brand: 'Lenovo' }));
+                setModelAddPrompt({ brand: 'Lenovo', model: shortModel });
+              }
+            }
+          }
+        } else {
+          setSnLookupState({ loading: false, result: null, error: 'Ürün bulunamadı.' });
+        }
+      } catch (e) {
+        setSnLookupState({ loading: false, result: null, error: 'Sorgulama hatası.' });
+      }
+    };
+    doLookup();
+  }, [formData.serialNumber, autoCheckEnabled]);
+
+  const handleAddModelFromPrompt = () => {
+    if (!modelAddPrompt) return;
+    const { brand, model } = modelAddPrompt;
+    const updated = { ...brandsModels, [brand]: [...(brandsModels[brand] || []), model] };
+    if (onUpdateBrandsModels) onUpdateBrandsModels(updated);
+    setFormData(prev => ({ ...prev, brand, model }));
+    setModelAddPrompt(null);
+    showToast(`"${model}" modeli ${brand} markasına eklendi!`);
+  };
 
   useEffect(() => {
     if (!customers.includes(formData.customer)) setFormData(prev => ({ ...prev, customer: customers[0] || '' }));
@@ -1594,7 +1658,10 @@ function NewTicketView({ allTickets, onSave, user, onCancel, customers, brandsMo
     const newItem = { ...formData, serialNumber: sn, status: 'Müşteriden Alındı', dateReceived: new Date().toISOString(), dateSent: null, dateReturned: null, dateDelivered: null, personnel: user?.displayName || 'Bilinmeyen', lastPersonnel: user?.displayName || 'Bilinmeyen', repairType: null, serviceNote: null, photos: photos };
     setPendingTickets([newItem, ...pendingTickets]);
     setFormData({ ...formData, serialNumber: '', complaint: '' }); 
-    setPhotos([]); 
+    setPhotos([]);
+    setSnLookupState({ loading: false, result: null, error: null });
+    lastCheckedSn.current = '';
+    setModelAddPrompt(null); 
   };
 
   const checkFirmAndFinalize = (sn) => {
@@ -1650,11 +1717,58 @@ function NewTicketView({ allTickets, onSave, user, onCancel, customers, brandsMo
             <h3 className="font-black text-xl text-white border-b border-slate-800 pb-4 mb-2">Yeni Cihaz Bilgileri</h3>
             
             <div><label className="block text-sm font-black text-slate-400 mb-2">Müşteri</label><select name="customer" value={formData.customer} onChange={handleChange} className="w-full px-4 py-3.5 rounded-2xl border border-slate-700 bg-slate-950 text-slate-100 outline-none font-bold shadow-sm transition-all">{customers.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
+
+            {/* Seri Numarası - Üstte, Toggle ile */}
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-sm font-black text-slate-400">Seri Numarası *</label>
+                <label className="flex items-center gap-2 cursor-pointer select-none" title="Seri numarası girildiğinde marka/model ve garanti bilgisini otomatik sorgula">
+                  <span className="text-[10px] font-bold text-slate-500">Otomatik Kontrol</span>
+                  <div className={`relative w-9 h-5 rounded-full transition-colors ${autoCheckEnabled ? 'bg-blue-600' : 'bg-slate-700'}`} onClick={() => setAutoCheckEnabled(!autoCheckEnabled)}>
+                    <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${autoCheckEnabled ? 'translate-x-4.5' : 'translate-x-0.5'}`}></div>
+                  </div>
+                </label>
+              </div>
+              <div className="relative">
+                <input required type="text" name="serialNumber" value={formData.serialNumber} onChange={handleChange} className={`w-full px-4 py-3.5 rounded-2xl border bg-slate-950 text-slate-100 outline-none uppercase font-mono font-black shadow-sm ${snLookupState.loading ? 'border-blue-500 animate-pulse' : snLookupState.result ? 'border-green-600' : snLookupState.error ? 'border-orange-600' : 'border-slate-700'}`} placeholder="SN-12345" />
+                {snLookupState.loading && <div className="absolute right-3 top-1/2 -translate-y-1/2"><RefreshCw size={18} className="text-blue-400 animate-spin" /></div>}
+                {snLookupState.result && <div className="absolute right-3 top-1/2 -translate-y-1/2"><CheckCircle size={18} className="text-green-400" /></div>}
+              </div>
+            </div>
+
+            {/* Otomatik Kontrol Sonuç Kartı */}
+            {snLookupState.result && (
+              <div className="bg-slate-950 border border-green-800/50 rounded-2xl p-4 space-y-2 animate-in fade-in slide-in-from-top-2">
+                <div className="flex items-center gap-2 text-green-400 text-xs font-black uppercase tracking-wider"><Globe size={14}/> Lenovo Ürün Bilgisi</div>
+                <div className="text-sm font-bold text-white">{snLookupState.result.productName}</div>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  <span className={`text-[10px] font-black px-2 py-1 rounded-lg ${snLookupState.result.warranty?.isInWarranty ? 'bg-green-900/40 text-green-400 border border-green-800' : 'bg-red-900/40 text-red-400 border border-red-800'}`}>
+                    {snLookupState.result.warranty?.isInWarranty ? `✓ Garantili (${snLookupState.result.warranty.remainingDays} gün)` : '✗ Garanti Dışı'}
+                  </span>
+                  {snLookupState.result.warranty?.endDate && <span className="text-[10px] font-bold px-2 py-1 rounded-lg bg-slate-800 text-slate-400 border border-slate-700">Bitiş: {snLookupState.result.warranty.endDate}</span>}
+                </div>
+              </div>
+            )}
+            {snLookupState.error && formData.serialNumber.trim().length >= 8 && (
+              <div className="bg-slate-950 border border-orange-800/50 rounded-2xl p-3 text-xs text-orange-400 font-bold flex items-center gap-2"><AlertCircle size={14}/> {snLookupState.error} (Manuel olarak seçebilirsiniz)</div>
+            )}
+
+            {/* Model Ekleme Onay Kartı */}
+            {modelAddPrompt && (
+              <div className="bg-blue-950/50 border border-blue-800 rounded-2xl p-4 animate-in fade-in slide-in-from-top-2">
+                <div className="text-sm text-blue-300 font-bold mb-3">"{modelAddPrompt.model}" modeli {modelAddPrompt.brand} listesinde yok. Eklensin mi?</div>
+                <div className="flex gap-2">
+                  <button type="button" onClick={handleAddModelFromPrompt} className="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl hover:bg-blue-500 transition-colors">Evet, Ekle</button>
+                  <button type="button" onClick={() => setModelAddPrompt(null)} className="px-4 py-2 bg-slate-700 text-slate-300 text-xs font-bold rounded-xl hover:bg-slate-600 transition-colors">Hayır</button>
+                </div>
+              </div>
+            )}
+
+            {/* Marka / Model - Altta */}
             <div className="grid grid-cols-2 gap-4">
               <div><label className="block text-sm font-black text-slate-400 mb-2">Marka</label><select name="brand" value={formData.brand} onChange={handleChange} className="w-full px-4 py-3.5 rounded-2xl border border-slate-700 bg-slate-950 text-slate-100 outline-none font-bold shadow-sm">{Object.keys(brandsModels).map(b => <option key={b} value={b}>{b}</option>)}</select></div>
               <div><label className="block text-sm font-black text-slate-400 mb-2">Model</label><select name="model" value={formData.model} onChange={handleChange} className="w-full px-4 py-3.5 rounded-2xl border border-slate-700 bg-slate-950 text-slate-100 outline-none font-bold shadow-sm">{formData.brand && brandsModels[formData.brand] ? brandsModels[formData.brand].map(m => <option key={m} value={m}>{m}</option>) : <option value="" disabled>Model yok</option>}</select></div>
             </div>
-            <div><label className="block text-sm font-black text-slate-400 mb-2">Seri Numarası *</label><input required type="text" name="serialNumber" value={formData.serialNumber} onChange={handleChange} className="w-full px-4 py-3.5 rounded-2xl border border-slate-700 bg-slate-950 text-slate-100 outline-none uppercase font-mono font-black shadow-sm" placeholder="SN-12345" /></div>
             <div><label className="block text-sm font-black text-slate-400 mb-2 flex justify-between"><span>Şikayet / Not</span><span className="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded-md">Opsiyonel</span></label><textarea name="complaint" value={formData.complaint} onChange={handleChange} rows="2" className="w-full px-4 py-3.5 rounded-2xl border border-slate-700 bg-slate-950 text-slate-100 outline-none font-medium shadow-sm" placeholder="Varsa şikayeti detaylı yazın..."></textarea></div>
 
             <div>
