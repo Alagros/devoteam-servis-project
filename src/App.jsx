@@ -244,7 +244,7 @@ export default function App() {
       if (res.ok) {
         const data = await res.json();
         if(data.customers) setCustomers(data.customers);
-        if(data.brandsModels) setBrandsModels(data.brandsModels);
+        if(data.brandsModels && Object.keys(data.brandsModels).length > 0) setBrandsModels(data.brandsModels);
         if(data.rootBackdoorEnabled !== undefined) setRootBackdoorEnabled(data.rootBackdoorEnabled);
       }
     } catch (e) { console.error("Ayarlar çekilemedi:", e); }
@@ -373,7 +373,8 @@ export default function App() {
   };
 
   const saveSettingsToDb = async (newCustomers, newBrandsModels) => {
-    try { await apiFetch(`${API_URL}/settings/global`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: 'global', customers: newCustomers, brandsModels: newBrandsModels }) }); } catch (e) { showToast('Ayarlar kaydedilirken hata oluştu!', 'error'); }
+    try { const safeBrands = (newBrandsModels && Object.keys(newBrandsModels).length > 0) ? newBrandsModels : brandsModels;
+      await apiFetch(`${API_URL}/settings/global`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: 'global', customers: newCustomers, brandsModels: safeBrands }) }); } catch (e) { showToast('Ayarlar kaydedilirken hata oluştu!', 'error'); }
   };
 
   const handleUpdateCustomers = (newC) => { setCustomers(newC); saveSettingsToDb(newC, brandsModels); showToast('Müşteri listesi başarıyla güncellendi!'); };
@@ -1445,6 +1446,9 @@ function TicketListView({ tickets, onNavigate, isBulkMode, setIsBulkMode, select
             </button>
             <button disabled={selectedForBulk.length === 0} onClick={() => onStatusChangeRequest(STATUS_LABELS.RETURNED, selectedForBulk)} className="flex-1 sm:flex-none text-xs bg-blue-600 text-white px-5 py-3 rounded-xl shadow-md font-bold disabled:opacity-50 flex items-center justify-center gap-2">
               <CheckCircle size={16}/> Servisten Al
+            </button>
+            <button disabled={selectedForBulk.length === 0} onClick={() => onStatusChangeRequest(STATUS_LABELS.DELIVERED, selectedForBulk)} className="flex-1 sm:flex-none text-xs bg-green-600 text-white px-5 py-3 rounded-xl shadow-md font-bold disabled:opacity-50 flex items-center justify-center gap-2 hover:bg-green-500 transition-colors">
+              <Users size={16}/> Müşteriye Teslim Et
             </button>
           </div>
         </div>

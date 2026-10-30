@@ -231,7 +231,13 @@ app.get('/settings/global', async (req, res) => {
 });
 
 app.put('/settings/global', async (req, res) => {
-    const newSettings = { ...req.body, id: 'global' };
+    const data = await readDb('settings');
+    const existing = data.find(s => s.id === 'global') || {};
+    const newSettings = { ...existing, ...req.body, id: 'global' };
+    // Eğer brandsModels boş gönderildiyse ve mevcut DB'de varsa ezilmesini önle
+    if ((!req.body.brandsModels || Object.keys(req.body.brandsModels).length === 0) && existing.brandsModels && Object.keys(existing.brandsModels).length > 0) {
+        newSettings.brandsModels = existing.brandsModels;
+    }
     await writeDbRecord('settings', 'global', newSettings);
     res.json(newSettings);
 });
